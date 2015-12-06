@@ -1,7 +1,7 @@
 
 ## xde-desktop
 
-Package xde-desktop-0.1 was released under GPL license 2015-12-06.
+Package xde-desktop-0.1.18 was released under GPL license 2015-12-06.
 
 This package provides a number of `C`-language tools for working with
 the X Desktop Envionment.  Most of these tools were previously written
@@ -11,7 +11,7 @@ available from perl(1).
 
 ### Release
 
-This is the `xde-desktop-0.1` package, released 2015-12-06.  This release,
+This is the `xde-desktop-0.1.18` package, released 2015-12-06.  This release,
 and the latest version, can be obtained from the GitHub repository at
 http://github.com/bbidulock/xde-desktop, using a command such as:
 
