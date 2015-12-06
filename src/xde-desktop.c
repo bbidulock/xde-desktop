@@ -331,6 +331,48 @@ typedef struct {
 
 XdeScreen *screens;			/* array of screens */
 
+void
+create_desktop(XdeScreen *xscr)
+{
+	GtkWindow *window;
+
+	window = xscr->desktop = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
+	gtk_window_set_accept_focus(window, FALSE);
+	gtk_window_set_auto_startup_notification(TRUE);
+	gtk_window_set_decorated(window, FALSE);
+	gtk_window_set_default_size(window, xscr->width, xscr->height);
+	gtk_window_set_deletable(window, FALSE);
+	gtk_window_set_focus_on_map(window, FALSE);
+#if 0
+	gtk_window_set_frame_dimensions(window, 0, 0, 0, 0);
+#endif
+	gtk_window_fullscreen(window);
+	gtk_window_set_gravity(window, GDK_GRAVITY_STATIC);
+	gtk_window_set_has_frame(window, FALSE);
+#if 0
+	gtk_window_set_keep_below(window, TRUE);
+#endif
+	gtk_window_move(window, 0, 0);
+	gtk_window_set_opacity(window, 1.0);
+	gtk_window_set_position(window, GTK_WIN_POS_CENTER_ALWAYS);
+	gtk_window_set_resizable(window, FALSE);
+	gtk_window_resize(window, xscr->width, xscr->height);
+	gtk_window_set_skip_pager_hint(window, TRUE);
+	gtk_window_set_skip_taskbar_hint(window, TRUE);
+	gtk_window_stick(window);
+	gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_DESKTOP);
+
+	gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
+	if (!gtk_widget_get_double_buffered(GTK_WIDGET(window))) {
+		DPRINTF("Setting double buffering!\n");
+		gtk_widget_set_double_buffered(GTK_WIDGET(window), TRUE);
+
+	} else {
+		DPRINTF("Double buffering already set!\n");
+	}
+}
+
+
 #if 0
 static void refresh_layout(XdeScreen *xscr);
 static void refresh_desktop(XdeScreen *xscr);
