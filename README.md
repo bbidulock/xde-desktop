@@ -3,20 +3,22 @@
 
 Package xde-desktop-0.1.18 was released under GPL license 2015-12-06.
 
-This package provides a number of `C`-language tools for working with
-the X Desktop Envionment.  Most of these tools were previously written
-in perl(1) and were part of the xde-tools package.  They have now been
-codified in `C` for speed and to provide access to libraries not
-available from perl(1).
+This package provides a desktop for the XDE (X Desktop Environment).
+As with other XDE utilties, this package is intended on working with
+the wide range of lightweight window managers supported by the XDE.
+This desktop was originally written in perl(1) and was part of the
+xde-tools package, then later in `C` in the xde-ctools package.  It
+has now been split off to a separate package for those that just want
+to run the desktop.
 
 ### Release
 
 This is the `xde-desktop-0.1.18` package, released 2015-12-06.  This release,
 and the latest version, can be obtained from the GitHub repository at
-http://github.com/bbidulock/xde-desktop, using a command such as:
+https://github.com/bbidulock/xde-desktop, using a command such as:
 
 ```bash
-git clone http://github.com/bbidulock/xde-desktop.git
+git clone https://github.com/bbidulock/xde-desktop.git
 ```
 
 Please see the [NEWS](NEWS) file for release notes and history of user visible
@@ -39,7 +41,7 @@ The quickest and easiest way to get xde-desktop up and running is to run
 the following commands:
 
 ```bash
-git clone http://github.com/bbidulock/xde-desktop.git xde-desktop
+git clone https://github.com/bbidulock/xde-desktop.git xde-desktop
 cd xde-desktop
 ./autogen.sh
 ./configure --prefix=/usr
@@ -62,5 +64,5 @@ Read the manual pages after installation:
 
 ### Issues
 
-Report issues to http://github.com/bbidulock/xde-desktop/issues.
+Report issues to https://github.com/bbidulock/xde-desktop/issues.
 
