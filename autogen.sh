@@ -30,6 +30,7 @@ subst="s:@PACKAGE@:$PACKAGE:g
        s:@VERSION@:$VERSION:g
        s:@DATE@:$DATE:g"
 
+sed -r -e "$subst" README.md.in >README.md
 sed -r -e "$subst" README.in >README
 sed -r -e "$subst" NEWS.in >NEWS
 sed -r -e "$subst" AUTHORS.in >AUTHORS
