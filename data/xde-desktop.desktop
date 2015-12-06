@@ -1,0 +1,15 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=XDE Desktop
+GenericName=Desktop
+Comment=Desktop for the X Desktop Environment
+Icon=desktop
+TryExec=xde-desktop
+Exec=xde-desktop
+Terminal=false
+Categories=XDE;System;Utilities;
+NotShowIn=GNOME;KDE;XFCE;LXDE;
+StartupNotify=true
+StartupWMClass=xde-desktop
+X-GNOME-Autostart-enabled=true
