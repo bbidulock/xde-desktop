@@ -331,6 +331,14 @@ typedef struct {
 
 XdeScreen *screens;			/* array of screens */
 
+typedef enum  {
+	TARGET_URI_LIST = 1,
+	TARGET_MOZ_URL = 2,
+	TARGET_XDS = 3,
+	TARGET_RAW = 4,
+} TargetType;
+
+
 void
 create_desktop(XdeScreen *xscr)
 {
@@ -370,8 +378,39 @@ create_desktop(XdeScreen *xscr)
 	} else {
 		DPRINTF("Double buffering already set!\n");
 	}
-}
+#if 0
+	{
+		GtkTargetEntry *targets;
 
+		targets = calloc(5, sizeof(*targets));
+
+		targets[0].target = "text/uri-list";
+		targets[0].flags = 0;
+		targets[0].info = TARGET_URI_LIST;
+
+		targets[1].target = "text/x-moz-url";
+		targets[1].flags = 0;
+		targets[1].info = TARGET_MOZ_URL;
+
+		targets[2].target = "XdndDirectSave0";
+		targets[2].flags = 0;
+		targets[2].info = TARGET_XDS;
+
+		targets[3].target = "application/octet-stream";
+		targets[3].flags = 0;
+		targets[3].info = TARGET_RAW;
+
+		gtk_drag_dest_set(GTK_WIDGET(window), GTK_DEST_DEFAULT_DROP, targets, 4,
+				  GDK_ACTION_COPY | GDK_ACTION_ASK | GDK_ACTION_MOVE |
+				  GDK_ACTION_LINK | GDK_ACTION_PRIVATE);
+		gtk_drag_dest_add_image_targets(GTK_WIDGET(window));
+		gtk_drag_dest_add_text_targets(GTK_WIDGET(window));
+		gtk_drag_dest_add_uri_targets(GTK_WIDGET(window));
+
+		free(targets);
+	}
+#endif
+}
 
 #if 0
 static void refresh_layout(XdeScreen *xscr);
