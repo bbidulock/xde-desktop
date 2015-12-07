@@ -338,11 +338,72 @@ typedef enum  {
 	TARGET_RAW = 4,
 } TargetType;
 
+static void
+xde_desk_set_style(XdeScreen *xscr)
+{
+}
+
+static void
+xde_desk_button_press_event()
+{
+}
+
+static void
+xde_desk_button_release_event()
+{
+}
+
+#if 0
+static void
+xde_desk_motion_notify_event()
+{
+}
+
+static void
+xde_desk_expose_event()
+{
+}
+#endif
+
+static void
+xde_desk_scroll_event()
+{
+}
+
+#if 0
+static void
+xde_desk_drag_drop()
+{
+}
+
+static void
+xde_desk_drag_data_received()
+{
+}
+
+static void
+xde_desk_drag_motion()
+{
+}
+
+static void
+xde_desk_drag_leave()
+{
+}
+#endif
 
 void
 create_desktop(XdeScreen *xscr)
 {
 	GtkWindow *window;
+	GdkWindow *win;
+	GtkWidget *aln;
+	GtkWidget *tab;
+	char *geometry;
+#if 0
+	GtkTargetEntry *targets;
+	GtkWidget *fix;
+#endif
 
 	window = xscr->desktop = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
 	gtk_window_set_accept_focus(window, FALSE);
@@ -379,37 +440,89 @@ create_desktop(XdeScreen *xscr)
 		DPRINTF("Double buffering already set!\n");
 	}
 #if 0
-	{
-		GtkTargetEntry *targets;
+	targets = calloc(5, sizeof(*targets));
 
-		targets = calloc(5, sizeof(*targets));
+	targets[0].target = "text/uri-list";
+	targets[0].flags = 0;
+	targets[0].info = TARGET_URI_LIST;
 
-		targets[0].target = "text/uri-list";
-		targets[0].flags = 0;
-		targets[0].info = TARGET_URI_LIST;
+	targets[1].target = "text/x-moz-url";
+	targets[1].flags = 0;
+	targets[1].info = TARGET_MOZ_URL;
 
-		targets[1].target = "text/x-moz-url";
-		targets[1].flags = 0;
-		targets[1].info = TARGET_MOZ_URL;
+	targets[2].target = "XdndDirectSave0";
+	targets[2].flags = 0;
+	targets[2].info = TARGET_XDS;
 
-		targets[2].target = "XdndDirectSave0";
-		targets[2].flags = 0;
-		targets[2].info = TARGET_XDS;
+	targets[3].target = "application/octet-stream";
+	targets[3].flags = 0;
+	targets[3].info = TARGET_RAW;
 
-		targets[3].target = "application/octet-stream";
-		targets[3].flags = 0;
-		targets[3].info = TARGET_RAW;
+	gtk_drag_dest_set(GTK_WIDGET(window), GTK_DEST_DEFAULT_DROP, targets, 4,
+			  GDK_ACTION_COPY | GDK_ACTION_ASK | GDK_ACTION_MOVE |
+			  GDK_ACTION_LINK | GDK_ACTION_PRIVATE);
+	gtk_drag_dest_add_image_targets(GTK_WIDGET(window));
+	gtk_drag_dest_add_text_targets(GTK_WIDGET(window));
+	gtk_drag_dest_add_uri_targets(GTK_WIDGET(window));
 
-		gtk_drag_dest_set(GTK_WIDGET(window), GTK_DEST_DEFAULT_DROP, targets, 4,
-				  GDK_ACTION_COPY | GDK_ACTION_ASK | GDK_ACTION_MOVE |
-				  GDK_ACTION_LINK | GDK_ACTION_PRIVATE);
-		gtk_drag_dest_add_image_targets(GTK_WIDGET(window));
-		gtk_drag_dest_add_text_targets(GTK_WIDGET(window));
-		gtk_drag_dest_add_uri_targets(GTK_WIDGET(window));
-
-		free(targets);
-	}
+	free(targets);
 #endif
+	gtk_widget_set_size_request(GTK_WIDGET(window), xscr->width, xscr->height);
+	geometry = g_strdup_printf("%dx%d+0+0", xscr->width, xscr->height);
+	gtk_window_parse_geometry(window, geometry);
+	g_free(geometry);
+	gtk_widget_add_events(GTK_WIDGET(window),
+			      GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
+			      GDK_BUTTON1_MOTION_MASK | GDK_BUTTON2_MOTION_MASK |
+			      GDK_BUTTON3_MOTION_MASK);
+	gtk_widget_realize(GTK_WIDGET(window));
+	win = gtk_widget_get_window(GTK_WIDGET(window));
+	gdk_window_set_override_redirect(win, TRUE);
+	gdk_window_set_back_pixmap(win, NULL, TRUE);
+	g_signal_connect(G_OBJECT(window), "button_press_event",
+			 G_CALLBACK(xde_desk_button_press_event), xscr);
+	g_signal_connect(G_OBJECT(window), "button_release_event",
+			 G_CALLBACK(xde_desk_button_release_event), xscr);
+#if 0
+	g_signal_connect(G_OBJECT(window), "motion_notify_event",
+			 G_CALLBACK(xde_desk_motion_notify_event), xscr);
+	g_signal_connect(G_OBJECT(window), "expose_event",
+			 G_CALLBACK(xde_desk_expose_event), xscr);
+#endif
+	g_signal_connect(G_OBJECT(window), "scroll_event",
+			 G_CALLBACK(xde_desk_scroll_event), xscr);
+#if 0
+	g_signal_connect(G_OBJECT(window), "drag_drop",
+			 G_CALLBACK(xde_desk_drag_drop), xscr);
+	g_signal_connect(G_OBJECT(window), "drag_data_received",
+			 G_CALLBACK(xde_desk_drag_data_received), xscr);
+	g_signal_connect(G_OBJECT(window), "drag_motion",
+			 G_CALLBACK(xde_desk_drag_motion), xscr);
+	g_signal_connect(G_OBJECT(window), "drag_leave",
+			 G_CALLBACK(xde_desk_drag_leave), xscr);
+#endif
+	aln = gtk_alignment_new(0.5, 0.5, 1.0, 1.0);
+	// fix = gtk_fixed_new();
+	// gtk_widget_set_size_request(fix, xscr->width, xscr->height);
+
+	gtk_container_set_border_width(GTK_CONTAINER(window), 0);
+	// gtk_container_add(GTK_CONTAINER(window), fix);
+	gtk_container_add(GTK_CONTAINER(window), aln);
+	tab = gtk_table_new(1, 1, TRUE);
+	gtk_table_set_col_spacings(GTK_TABLE(tab), 0);
+	gtk_table_set_row_spacings(GTK_TABLE(tab), 0);
+	gtk_table_set_homogeneous(GTK_TABLE(tab), TRUE);
+	gtk_widget_set_size_request(tab, 80, 80);
+	gtk_widget_set_tooltip_text(tab, "Click Me!");
+	// gtk_fixed_put(GTK_FIXED(fix), tab, 0, 0);
+	gtk_container_add(GTK_CONTAINER(aln), tab);
+
+	xde_desk_set_style(xscr);
+	gtk_widget_show(tab);
+	// gtk_widget_show(fix);
+	gtk_widget_show(aln);
+	gtk_widget_show(GTK_WIDGET(window));
+	gdk_window_lower(win);
 }
 
 #if 0
