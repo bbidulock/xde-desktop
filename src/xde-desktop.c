@@ -349,9 +349,9 @@ typedef struct {
 		GList *links;
 		GList *dires;
 		GList *files;
-		GHashTable *paths;
 		GList *detop;
-		GList *winds;
+		GHashTable *paths;
+		GHashTable *winds;
 	} icons;
 	unsigned int xoff, yoff;
 	GList *paths;
@@ -549,6 +549,32 @@ xde_icon_file_new(XdeScreen *xscr, const char *path)
 	/* FIXME: create one */
 	return (icon);
 }
+
+static XID
+xde_icon_create(XdeIcon *icon)
+{
+	XID xid = None;
+
+	/* FIXME: create icon */
+	return (xid);
+}
+
+/** @brief show the icon on the corresponding desktop
+  */
+static void
+xde_icon_show(XdeIcon *icon)
+{
+	gtk_widget_show(icon->widget);
+}
+
+/** @brief hide the icon from the corresponding desktop
+  */
+static void
+xde_icon_hide(XdeIcon *icon)
+{
+	gtk_widget_hide(icon->widget);
+}
+
 /** @brief create objects
   *
   * Creates the desktop icons objects for each of the shortcuts, directories
@@ -609,6 +635,27 @@ xde_desktop_create_objects(XdeScreen *xscr)
 static void
 xde_desktop_create_windows(XdeScreen *xscr)
 {
+	GList *detop;
+	GHashTable *winds;
+	GHashTableIter iter;
+	gpointer key, value;
+
+	winds = g_hash_table_new_full(&g_int_hash, &g_int_equal, NULL, NULL);
+
+	for (detop = xscr->icons.detop; detop; detop = detop->next) {
+		XdeIcon *icon = detop->data;
+		XID xid;
+
+		xid = xde_icon_create(icon);
+		g_hash_table_replace(winds, (gpointer) xid, icon);
+	}
+
+	g_hash_table_iter_init(&iter, xscr->icons.winds);
+	while (g_hash_table_iter_next(&iter, &key, &value))
+		if (!g_hash_table_lookup(winds, key))
+			xde_icon_hide(value);
+	g_hash_table_destroy(xscr->icons.winds);
+	xscr->icons.winds = winds;
 }
 
 /** @brief calculate cells
@@ -634,22 +681,6 @@ next_cell(XdeScreen *xscr, int *col, int *row, int *x, int *y)
 		*col += 1;
 		*x += ICON_WIDE;
 	}
-}
-
-/** @brief show the icon on the corresponding desktop
-  */
-static void
-xde_icon_show(XdeIcon *icon)
-{
-	gtk_widget_show(icon->widget);
-}
-
-/** @brief hide the icon from the corresponding desktop
-  */
-static void
-xde_icon_hide(XdeIcon *icon)
-{
-	gtk_widget_hide(icon->widget);
 }
 
 /** @brief remove icon from corresponding desktop
