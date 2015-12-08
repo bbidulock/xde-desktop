@@ -347,6 +347,10 @@ typedef struct {
 		GList *winds;
 	} icons;
 	unsigned int xoff, yoff;
+	GList *paths;
+	GList *links;
+	GList *dires;
+	GList *files;
 	GtkWidget *table;
 	GFile *directory;
 	GFileMonitor *monitor;
@@ -453,7 +457,6 @@ xde_desktop_watch_directory(XdeScreen *xscr, const char *label, const char *path
 static void
 xde_desktop_read_desktop(XdeScreen *xscr)
 {
-	GList *paths = NULL, *links = NULL, *dires = NULL, *files = NULL;
 	char *path;
 	DIR *dir;
 
@@ -472,15 +475,14 @@ xde_desktop_read_desktop(XdeScreen *xscr)
 				continue;
 			name = g_strdup_printf("%s/%s", path, d->d_name);
 			if (d->d_type == DT_DIR) {
-				dires =
-				    g_list_append(dires, g_strdup_printf("%s/%s", path, d->d_name));
-				paths = g_list_append(paths, name);
+				xscr->dires = g_list_append(xscr->dires, g_strdup_printf("%s/%s", path, d->d_name));
+				xscr->paths = g_list_append(xscr->paths, name);
 			} else if (d->d_type == DT_LNK || d->d_type == DT_REG) {
 				if (strstr(d->d_name, ".desktop"))
-					links = g_list_append(links, name);
+					xscr->links = g_list_append(xscr->links, name);
 				else
-					files = g_list_append(files, name);
-				paths = g_list_append(paths, name);
+					xscr->files = g_list_append(xscr->files, name);
+				xscr->paths = g_list_append(xscr->paths, name);
 			} else
 				g_free(name);
 		}
