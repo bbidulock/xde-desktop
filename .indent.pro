@@ -138,6 +138,9 @@
 -TGtkTreeViewColumn
 -TGtkWidget
 -TGtkWindow
+-TGFile
+-TGFileMonitor
+-TGFileMonitorEvent
 -Tgwatch_fp_t
 -Thash_fp_t
 -Thash_tab_t

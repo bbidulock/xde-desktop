@@ -348,6 +348,8 @@ typedef struct {
 	} icons;
 	unsigned int xoff, yoff;
 	GtkWidget *table;
+	GFile *directory;
+	GFileMonitor *monitor;
 } XdeScreen;
 
 XdeScreen *screens;			/* array of screens */
@@ -418,13 +420,73 @@ set_style(XdeScreen *xscr)
 {
 }
 
+void xde_desktop_update_desktop(XdeScreen *xscr);
+
+static void
+xde_desktop_changed(GFileMonitor *monitor, GFile *file, GFile *other_file,
+		    GFileMonitorEvent event_type, gpointer user_data)
+{
+	XdeScreen *xscr = user_data;
+	xde_desktop_update_desktop(xscr);
+}
+
+static void
+xde_desktop_watch_directory(XdeScreen *xscr, const char *label, const char *path)
+{
+	if (xscr->directory)
+		g_object_unref(xscr->directory);
+	xscr->directory = g_file_new_for_path(path);
+	if (xscr->monitor)
+		g_file_monitor_cancel(xscr->monitor);
+	xscr->monitor = g_file_monitor_directory(xscr->directory,
+						 G_FILE_MONITOR_NONE |
+						 G_FILE_MONITOR_WATCH_MOUNTS |
+						 G_FILE_MONITOR_WATCH_MOVES, NULL, NULL);
+	g_signal_connect(G_OBJECT(xscr->monitor), "changed", G_CALLBACK(xde_desktop_changed), xscr);
+}
+
 /** @brief read the desktop
   *
-  * Perform a read of the $HOME/Desktop directory.
+  * Perform a read of the $HOME/Desktop directory.  Must follow xdg spec to
+  * find directory, just use $HOME/Desktop for now.
   */
 static void
-read_desktop(XdeScreen *xscr)
+xde_desktop_read_desktop(XdeScreen *xscr)
 {
+	GList *paths = NULL, *links = NULL, *dires = NULL, *files = NULL;
+	char *path;
+	DIR *dir;
+
+	path = g_strdup_printf("%s/Desktop", getenv("HOME") ? : "~");
+	xde_desktop_watch_directory(xscr, "Desktop", path);
+	if ((dir = opendir(path))) {
+		struct dirent *d;
+
+		while ((d = readdir(dir))) {
+			char *name;
+
+			if (!strcmp(d->d_name, ".") && !strcmp(d->d_name, ".."))
+				continue;
+			/* TODO: provide option for hidden files. */
+			if (*d->d_name == '.')
+				continue;
+			name = g_strdup_printf("%s/%s", path, d->d_name);
+			if (d->d_type == DT_DIR) {
+				dires =
+				    g_list_append(dires, g_strdup_printf("%s/%s", path, d->d_name));
+				paths = g_list_append(paths, name);
+			} else if (d->d_type == DT_LNK || d->d_type == DT_REG) {
+				if (strstr(d->d_name, ".desktop"))
+					links = g_list_append(links, name);
+				else
+					files = g_list_append(files, name);
+				paths = g_list_append(paths, name);
+			} else
+				g_free(name);
+		}
+		closedir(dir);
+	}
+	g_free(path);
 }
 
 /** @brief create objects
@@ -435,7 +497,7 @@ read_desktop(XdeScreen *xscr)
   * that are no longer used are released to be freed.
   */
 static void
-create_objects(XdeScreen *xscr)
+xde_desktop_create_objects(XdeScreen *xscr)
 {
 }
 
@@ -449,7 +511,7 @@ create_objects(XdeScreen *xscr)
   * now so that they do not persist until finalized.
   */
 static void
-create_windows(XdeScreen *xscr)
+xde_desktop_create_windows(XdeScreen *xscr)
 {
 }
 
@@ -461,7 +523,7 @@ create_windows(XdeScreen *xscr)
   * Returns a boolean indicating whether the calculation changed.
   */
 static void
-calculate_cells(XdeScreen *xscr)
+xde_desktop_calculate_cells(XdeScreen *xscr)
 {
 }
 
@@ -524,7 +586,7 @@ xde_icon_place(XdeIcon *icon, GtkWidget *table, int col, int row)
   * contents.
   */
 static void
-arrange_icons(XdeScreen *xscr)
+xde_desktop_arrange_icons(XdeScreen *xscr)
 {
 	int col = 0, row = 0;
 	int x = xscr->xoff, y = xscr->yoff;
@@ -602,18 +664,18 @@ xde_desktop_show_icons(XdeScreen *xscr)
   * or rereading the $HOME/Desktop directory.
   */
 void
-update_desktop(XdeScreen *xscr)
+xde_desktop_update_desktop(XdeScreen *xscr)
 {
 	OPRINTF("==> Reading desktop...\n");
-	read_desktop(xscr);
+	xde_desktop_read_desktop(xscr);
 	OPRINTF("==> Creating objects...\n");
-	create_objects(xscr);
+	xde_desktop_create_objects(xscr);
 	OPRINTF("==> Creating windows...\n");
-	create_windows(xscr);
+	xde_desktop_create_windows(xscr);
 	OPRINTF("==> Calculating cells...\n");
-	calculate_cells(xscr);
+	xde_desktop_calculate_cells(xscr);
 	OPRINTF("==> Arranging icons...\n");
-	arrange_icons(xscr);
+	xde_desktop_arrange_icons(xscr);
 	OPRINTF("==> Showing icons...\n");
 	xde_desktop_show_icons(xscr);
 }
