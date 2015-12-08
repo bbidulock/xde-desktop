@@ -449,6 +449,12 @@ xde_desktop_watch_directory(XdeScreen *xscr, const char *label, const char *path
 	g_signal_connect(G_OBJECT(xscr->monitor), "changed", G_CALLBACK(xde_desktop_changed), xscr);
 }
 
+void
+xde_list_free(gpointer data)
+{
+	g_free(data);
+}
+
 /** @brief read the desktop
   *
   * Perform a read of the $HOME/Desktop directory.  Must follow xdg spec to
@@ -459,6 +465,16 @@ xde_desktop_read_desktop(XdeScreen *xscr)
 {
 	char *path;
 	DIR *dir;
+
+	g_list_free_full(xscr->paths, &xde_list_free);
+	g_list_free(xscr->links);
+	g_list_free(xscr->dires);
+	g_list_free(xscr->files);
+
+	xscr->paths = NULL;
+	xscr->links = NULL;
+	xscr->dires = NULL;
+	xscr->files = NULL;
 
 	path = g_strdup_printf("%s/Desktop", getenv("HOME") ? : "~");
 	xde_desktop_watch_directory(xscr, "Desktop", path);
