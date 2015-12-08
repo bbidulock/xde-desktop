@@ -293,7 +293,14 @@ typedef struct {
 #define ICON_WIDE 80
 #define ICON_HIGH 80
 
+typedef enum {
+	IconTypeShortcut = 1,
+	IconTypeDirectory = 2,
+	IconTypeFile = 3,
+} XdeIconType;
+
 typedef struct {
+	XdeIconType type;
 	GtkWidget *widget;
 	struct {
 		int col;
@@ -342,7 +349,7 @@ typedef struct {
 		GList *links;
 		GList *dires;
 		GList *files;
-		GList *paths;
+		GHashTable *paths;
 		GList *detop;
 		GList *winds;
 	} icons;
@@ -507,6 +514,41 @@ xde_desktop_read_desktop(XdeScreen *xscr)
 	g_free(path);
 }
 
+static void
+xde_icon_free(gpointer data)
+{
+	XdeIcon *icon = data;
+
+	gtk_widget_destroy(icon->widget);
+	g_free(icon);
+}
+
+static XdeIcon *
+xde_icon_shortcut_new(XdeScreen *xscr, const char *path)
+{
+	XdeIcon *icon = NULL;
+
+	/* FIXME: create one */
+	return (icon);
+}
+
+static XdeIcon *
+xde_icon_directory_new(XdeScreen *xscr, const char *path)
+{
+	XdeIcon *icon = NULL;
+
+	/* FIXME: create one */
+	return (icon);
+}
+
+static XdeIcon *
+xde_icon_file_new(XdeScreen *xscr, const char *path)
+{
+	XdeIcon *icon = NULL;
+
+	/* FIXME: create one */
+	return (icon);
+}
 /** @brief create objects
   *
   * Creates the desktop icons objects for each of the shortcuts, directories
@@ -517,6 +559,42 @@ xde_desktop_read_desktop(XdeScreen *xscr)
 static void
 xde_desktop_create_objects(XdeScreen *xscr)
 {
+	GList *links, *dires, *files;
+	XdeIcon *icon;
+
+	if (!xscr->icons.paths) {
+		xscr->icons.paths =
+		    g_hash_table_new_full(&g_str_hash, &g_str_equal, NULL, xde_icon_free);
+	}
+
+	for (links = xscr->links; links; links = links->next) {
+		if (!(icon = g_hash_table_lookup(xscr->icons.paths, links->data)))
+			icon = xde_icon_shortcut_new(xscr, links->data);
+		if (icon->type == IconTypeShortcut)
+			xscr->icons.links = g_list_append(xscr->icons.links, icon);
+		else
+			xscr->icons.files = g_list_append(xscr->icons.files, icon);
+		xscr->icons.detop = g_list_append(xscr->icons.detop, icon);
+		g_hash_table_replace(xscr->icons.paths, links->data, icon);
+	}
+	for (dires = xscr->dires; dires; dires = dires->next) {
+		if (!(icon = g_hash_table_lookup(xscr->icons.paths, dires->data)))
+			icon = xde_icon_directory_new(xscr, dires->data);
+		if (icon) {
+			xscr->icons.dires = g_list_append(xscr->icons.dires, icon);
+			xscr->icons.detop = g_list_append(xscr->icons.detop, icon);
+			g_hash_table_replace(xscr->icons.paths, dires->data, icon);
+		}
+	}
+	for (files = xscr->files; files; files = files->next) {
+		if (!(icon = g_hash_table_lookup(xscr->icons.paths, files->data)))
+			icon = xde_icon_file_new(xscr, files->data);
+		if (icon) {
+			xscr->icons.files = g_list_append(xscr->icons.files, icon);
+			xscr->icons.detop = g_list_append(xscr->icons.detop, icon);
+			g_hash_table_replace(xscr->icons.paths, files->data, icon);
+		}
+	}
 }
 
 /** @brief create windows
