@@ -126,6 +126,7 @@
 -TGtkMenu
 -TGtkMenuItem
 -TGtkMenuShell
+-TGtkTable
 -TGtkStatusIcon
 -TGtkTextBuffer
 -TGtkTooltip
@@ -303,6 +304,7 @@
 -TXClientMessageEvent
 -TXdeMonitor
 -TXdeScreen
+-TXdeIcon
 -TXdgContext
 -TXdgDirectory
 -TXdgFileEntry

@@ -290,6 +290,17 @@ typedef struct {
 	GdkRectangle geom;		/* geometry of the monitor */
 } XdeMonitor;
 
+#define ICON_WIDE 80
+#define ICON_HIGH 80
+
+typedef struct {
+	GtkWidget *widget;
+	struct {
+		int col;
+		int row;
+	} attached;
+} XdeIcon;
+
 typedef struct {
 	int index;			/* index */
 	GdkDisplay *disp;
@@ -327,6 +338,16 @@ typedef struct {
 	Bool keyboard;			/* have a keyboard grab */
 	Bool pointer;			/* have a pointer grab */
 	GdkModifierType mask;
+	struct {
+		GList *links;
+		GList *dires;
+		GList *files;
+		GList *paths;
+		GList *detop;
+		GList *winds;
+	} icons;
+	unsigned int xoff, yoff;
+	GtkWidget *table;
 } XdeScreen;
 
 XdeScreen *screens;			/* array of screens */
@@ -337,11 +358,6 @@ typedef enum  {
 	TARGET_XDS = 3,
 	TARGET_RAW = 4,
 } TargetType;
-
-static void
-xde_desk_set_style(XdeScreen *xscr)
-{
-}
 
 static void
 xde_desk_button_press_event()
@@ -391,6 +407,216 @@ xde_desk_drag_leave()
 {
 }
 #endif
+
+/** @brief set desktop style
+  *
+  * Adjusts the style of the desktop window to use the pixmap specified by
+  * _XROOTPMAP_ID as the background.  Uses GTK2 styles to do this.
+  */
+static void
+set_style(XdeScreen *xscr)
+{
+}
+
+/** @brief read the desktop
+  *
+  * Perform a read of the $HOME/Desktop directory.
+  */
+static void
+read_desktop(XdeScreen *xscr)
+{
+}
+
+/** @brief create objects
+  *
+  * Creates the desktop icons objects for each of the shortcuts, directories
+  * and documents found in the Desktop directory.  Desktop icon objects are
+  * only created if they have not already been created.  Desktop icons objects
+  * that are no longer used are released to be freed.
+  */
+static void
+create_objects(XdeScreen *xscr)
+{
+}
+
+/** @brief create windows
+  *
+  * Creates windows for all desktop icons.  This method simply requests that
+  * each icon create a window and return the XID of the window.  Desktop
+  * icons are indexed by XID so that we can find them in event handlers.
+  * Note that if a window has already been created for a desktop icon, it
+  * still returns its XID.  If desktop icons have been deleted, hide them
+  * now so that they do not persist until finalized.
+  */
+static void
+create_windows(XdeScreen *xscr)
+{
+}
+
+/** @brief calculate cells
+  *
+  * Creates an array of ICON_WIDEx72 cells on the desktop in columns and rows.
+  * This uses the available area of the desktop as indicated by the
+  * _NET_WORKAREA or _WIN_WORKAREA properties on the root window.
+  * Returns a boolean indicating whether the calculation changed.
+  */
+static void
+calculate_cells(XdeScreen *xscr)
+{
+}
+
+static void
+next_cell(XdeScreen *xscr, int *col, int *row, int *x, int *y)
+{
+	*row += 1;
+	*y += ICON_HIGH;
+	if (*row >= xscr->rows) {
+		*row = 0;
+		*y = xscr->rows;
+		*col += 1;
+		*x += ICON_WIDE;
+	}
+}
+
+/** @brief show the icon on the corresponding desktop
+  */
+static void
+xde_icon_show(XdeIcon *icon)
+{
+	gtk_widget_show(icon->widget);
+}
+
+/** @brief hide the icon from the corresponding desktop
+  */
+static void
+xde_icon_hide(XdeIcon *icon)
+{
+	gtk_widget_hide(icon->widget);
+}
+
+/** @brief remove icon from corresponding desktop
+  */
+static void
+xde_icon_remove(XdeIcon *icon, GtkWidget *table)
+{
+	if (icon->attached.row != -1 && icon->attached.col != -1) {
+		gtk_container_remove(GTK_CONTAINER(table), icon->widget);
+		icon->attached.col = -1;
+		icon->attached.row = -1;
+	}
+}
+
+/** @brief place the icon on the corresponding desktop at column and row
+  */
+static void
+xde_icon_place(XdeIcon *icon, GtkWidget *table, int col, int row)
+{
+	xde_icon_remove(icon, table);
+	gtk_table_attach_defaults(GTK_TABLE(table), icon->widget, col, col + 1, row, row + 1);
+	icon->attached.col = col;
+	icon->attached.row = row;
+}
+
+/** @brief arrange icons
+  *
+  * Arranges (places) all of the desktop icons.  The placement is performed
+  * by arranging each icon and asking it to place itself, and update its
+  * contents.
+  */
+static void
+arrange_icons(XdeScreen *xscr)
+{
+	int col = 0, row = 0;
+	int x = xscr->xoff, y = xscr->yoff;
+
+	if (xscr->icons.links && col < xscr->cols) {
+		GList *links;
+
+		for (links = xscr->icons.links; links; links = links->next) {
+			xde_icon_place(links->data, xscr->table, col, row);
+			xscr->icons.detop = g_list_append(xscr->icons.detop, links->data);
+			next_cell(xscr, &col, &row, &x, &y);
+			if (col < xscr->cols)
+				continue;
+			break;
+		}
+	}
+	if (xscr->icons.dires && col < xscr->cols) {
+		GList *dires;
+
+		for (dires = xscr->icons.dires; dires; dires = dires->next) {
+			xde_icon_place(dires->data, xscr->table, col, row);
+			xscr->icons.detop = g_list_append(xscr->icons.detop, dires->data);
+			next_cell(xscr, &col, &row, &x, &y);
+			if (col < xscr->cols)
+				continue;
+			break;
+		}
+	}
+	if (xscr->icons.files && col < xscr->cols) {
+		GList *files;
+
+		for (files = xscr->icons.files; files; files = files->next) {
+			xde_icon_place(files->data, xscr->table, col, row);
+			xscr->icons.detop = g_list_append(xscr->icons.detop, files->data);
+			next_cell(xscr, &col, &row, &x, &y);
+			if (col < xscr->cols)
+				continue;
+			break;
+		}
+	}
+}
+
+/** @brief hide icons
+  *
+  * Shows all of the desktop icons.  The method simply requests that each
+  * icon hide itself.
+  */
+void
+xde_desktop_hide_icons(XdeScreen *xscr)
+{
+	GList *detop;
+
+	for (detop = xscr->icons.detop; detop; detop = detop->next)
+		xde_icon_hide(detop->data);
+}
+
+
+/** @brief show icons
+  *
+  * Shows all of the desktop icons.  The method simply requests that each
+  * icon show itself.
+  */
+static void
+xde_desktop_show_icons(XdeScreen *xscr)
+{
+	GList *detop;
+
+	for (detop = xscr->icons.detop; detop; detop = detop->next)
+		xde_icon_show(detop->data);
+}
+
+/** @brief update the desktop
+  *
+  * Create or updates the complete desktop arrangement, including reading
+  * or rereading the $HOME/Desktop directory.
+  */
+void
+update_desktop(XdeScreen *xscr)
+{
+	OPRINTF("==> Reading desktop...\n");
+	read_desktop(xscr);
+	OPRINTF("==> Creating objects...\n");
+	create_objects(xscr);
+	OPRINTF("==> Creating windows...\n");
+	create_windows(xscr);
+	OPRINTF("==> Calculating cells...\n");
+	calculate_cells(xscr);
+	OPRINTF("==> Arranging icons...\n");
+	arrange_icons(xscr);
+	OPRINTF("==> Showing icons...\n");
+	xde_desktop_show_icons(xscr);
+}
 
 void
 create_desktop(XdeScreen *xscr)
@@ -508,16 +734,16 @@ create_desktop(XdeScreen *xscr)
 	gtk_container_set_border_width(GTK_CONTAINER(window), 0);
 	// gtk_container_add(GTK_CONTAINER(window), fix);
 	gtk_container_add(GTK_CONTAINER(window), aln);
-	tab = gtk_table_new(1, 1, TRUE);
+	tab = xscr->table = gtk_table_new(1, 1, TRUE);
 	gtk_table_set_col_spacings(GTK_TABLE(tab), 0);
 	gtk_table_set_row_spacings(GTK_TABLE(tab), 0);
 	gtk_table_set_homogeneous(GTK_TABLE(tab), TRUE);
-	gtk_widget_set_size_request(tab, 80, 80);
+	gtk_widget_set_size_request(tab, ICON_WIDE, ICON_HIGH);
 	gtk_widget_set_tooltip_text(tab, "Click Me!");
 	// gtk_fixed_put(GTK_FIXED(fix), tab, 0, 0);
 	gtk_container_add(GTK_CONTAINER(aln), tab);
 
-	xde_desk_set_style(xscr);
+	set_style(xscr);
 	gtk_widget_show(tab);
 	// gtk_widget_show(fix);
 	gtk_widget_show(aln);
@@ -1797,8 +2023,6 @@ init_window(XdeScreen *xscr)
 	gtk_table_set_col_spacings(tab, 0);
 	gtk_table_set_row_spacings(tab, 0);
 	gtk_table_set_homogeneous(tab, TRUE);
-#define ICON_WIDE 80
-#define ICON_HIGH 80
 	gtk_widget_set_size_request(GTK_WIDGET(tab), ICON_WIDE, ICON_HIGH);
 //	gtk_widget_set_tooltip_text(GTK_WIDGET(tab), "Click Me!");
 
