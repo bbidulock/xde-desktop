@@ -117,18 +117,34 @@ configuration file and the default configuration files:
 
 =over
 
-=item C<XDG_CONFIG_HOME>
+=item B<XDG_CONFIG_HOME>
 
 When unspecified, defaults to F<$HOME/.config> in accordance with XDG
 specifications.  B<xde-desktop> looks for user configuration files in
 F<$XDG_CONFIG_HOME/xde/desktop.ini>.
 
-=item C<XDG_CONFIG_DIRS>
+=item B<XDG_CONFIG_DIRS>
 
 When unspecified, defaults to F</etc/xdg> in accordance with XDG
 specifications.  XDE will prepend the F</etc/xdg/xde> directory to this
 path if it does not already exist in the path.  B<xde-desktop> looks for
 system configuration files in F<@XDG_CONFIG_DIRS/xde/desktop.ini>.
+
+=back
+
+The following additional environment variables are considered by the
+program:
+
+=over
+
+=item B<DISPLAY>
+
+Specifies the X-Windows display unless specified on the command line.
+
+=item B<SESSION_MANAGER>
+
+Specifies the list of transport connections on which to contact the
+session manager.
 
 =back
 
@@ -180,52 +196,117 @@ below.
 B<xde-desktop> supports all EWMH/NetWM 1.5, GNOME/WinWM and ICCCM 2.0
 compliant window managers.  It even supports some plain ICCCM/Motif WMH
 compliant window managers that do not support EWMH/NetWM or GNOME/WinWM
-(such as L<twm(1)> and L<mwm(1)>).  Tested window managers and the
-idiosyncrasies handled for them are as follows:
+(such as L<twm(1)>, L<mwm(1)> and L<dtwm(1)>).  Tested window managers
+and the idiosyncrasies handled for them are as follows:
 
 =over
 
 =item L<2bwm(1)>
 
+L<2bwm(1)> is supported and works well.
+
 =item L<adwm(1)>
+
+L<adwm(1)> is supported and works well.
 
 =item L<aewm(1)>
 
+L<aewm(1)> is supported and works well.
+
 =item L<aewm++(1)>
+
+L<aewm++(1)> is barely ICCCM compliant.  It does not really support
+desktops and, therefore, only provides a single desktop.
 
 =item L<afterstep(1)>
 
+L<afterstep(1)> provides both workspaces and viewports (large desktops).
+F<libwnck+> does not support these well, so when B<xde-desktop> detects
+that it is running under L<afterstep(1)> it only provides a single
+desktop.  (It has a desktop button proxy, but it does not relay scroll
+wheel events by default.)
+
 =item L<awesome(1)>
+
+L<awesome(1)> is supported and works well.
 
 =item L<blackbox(1)>
 
+L<blackbox(1)> is supported and works well.
+
 =item L<bspwm(1)>
+
+L<bspwm(1)> is supported and works well.
 
 =item L<ctwm(1)>
 
+L<ctwm(1)> is only GNOME/WinWM compliant and is not yet supported by
+F<libwnck+>.  B<xde-desktop> mitigates this to some extent; however, use
+L<etwm(1)> instead.
+
 =item L<cwm(1)>
+
+L<cwm(1)> is supported, but it doesn't work that well.
 
 =item L<dtwm(1)>
 
+L<dtwm(1)> is only OSF/Motif MWMH compliant and does support multiple
+desktops; however, F<libwnck+> does not yet support OSF/Motif/CDE.
+Nevertheless, B<xde-desktop> mitigates this to some extent by watching
+the necessary OSF/Motif/CDE properties.
+
 =item L<dwm(1)>
+
+L<dwm(1)> is barely ICCCM compliant.  It does not work well.
 
 =item L<echinus(1)>
 
+L<echinus(1)> is supported and works well.
+
 =item L<etwm(1)>
+
+L<etwm(1)> is supported and works well.
 
 =item L<failsafewm(1)>
 
+L<failsafewm(1)> has no desktops and is not supported.
+
 =item L<fluxbox(1)>
+
+L<fluxbox(1)> is supported and works well.  Unfortunately, L<fluxbox(1)>
+allows "desktop" windows to be moved with C<Alt+Button1>.
 
 =item L<flwm(1)>
 
+L<flwm(1)> supports GNOME/WinWM but not EWMH/NetWM and is not currently
+supported by F<libwnck+>.  B<xde-desktop> mitigates this to some extent.
+
+=item L<fvwm(1)>
+
+L<fvwm(1)> is supported and works well.  L<fvwm(1)> provides a desktop
+button proxy but it needs the B<--noproxy> option.  Viewports work
+better than on L<afterstep(1)> and behaviour is predictable.
+
 =item L<glasswm(1)>
+
+L<glasswm(1)> provides some window control atoms of its own; however,
+B<xde-desktop> does not support these at this time.
 
 =item L<goomwwm(1)>
 
+L<goomwwm(1)> provides some window control atoms of its own; however,
+B<xde-desktop> does not support these at this time.
+
 =item L<herbstluftwm(1)>
 
+L<herbstluftwm(1)> is supported and works well.
+
 =item L<i3(1)>
+
+L<i3(1)> is supported; however, L<i3(1)> does not support
+B<_NET_NUMBER_OF_DESKTOPS>, so only the current desktop is shown at any
+given time, which makes it less effective.  (This may have been fixed in
+current versions of L<i3(1)>.)
 
 =item L<icewm(1)>
 
@@ -250,13 +331,27 @@ makes this consistent with other window managers.
 
 =item L<larswm(1)>
 
+L<larswm(1)> is barely ICCCM compliant and is, therefore, not supported.
+
 =item L<matwm2(1)>
+
+L<matwm2(1)> is supported and works well.
 
 =item L<metacity(1)>
 
+L<metacity(1)> is supported and works well.
+
 =item L<mvwm(1)>
 
+Like L<fvwm(1)>, L<mvwm(1)> is supported and works well.  L<mvwm(1)>
+provides a desktop button proxy but it needs the B<--noproxy> option.
+Viewports work better than on L<afterstep(1)> and behaviour is
+predictable.
+
 =item L<mwm(1)>
+
+L<mwm(1)> only supports OSF/Motif and does not support multiple
+desktops.  It is not supported.
 
 =item L<openbox(1)>
 
@@ -274,29 +369,65 @@ makes this consistent with other window managers.
 
 =item L<spectrwm(1)>
 
+L<spectrwm(1)> is untested.
+
 =item L<twm(1)>
+
+L<twm(1)> does not support multiple desktops; however, it is supported
+for a single desktop.
 
 =item L<uwm(1)>
 
+L<uwm(1)> is supported and works well.
+
 =item L<velox(1)>
+
+L<velox(1)> is untested.
 
 =item L<vtwm(1)>
 
+L<vtwm(1)> is barely ICCCM compliant and currently unsupported: use
+L<etwm(1)> instead.
+
 =item L<waimea(1)>
+
+L<waimea(1)> is supported; however, L<waimea(1)> defaults to
+triple-sized large desktops in a 2x2 arrangement.  With large virtual
+desktops F<libwnck+> gets confused just as with L<afterstep(1)>.
+L<fvwm(1)> must be doing something right.  It appears to be
+B<_NET_DESKTOP_VIEWPORT>, which is supported to be set to the viewport
+position of each desktop (and isn't).  Use the L<waimea(1)> at
+L<https://github.com/bbidulock/waimea> for a corrected version.
 
 =item L<wind(1)>
 
+L<wind(1)> is supported and works well.
+
 =item L<wm2(1)>
+
+L<wm2(1)> is barely ICCCM compliant and currently unsupported: use its
+L<wmx(1)> derivative.
 
 =item L<wmaker(1)>
 
+L<wmaker(1)> is supported and works well.
+
 =item L<wmii(1)>
+
+L<wmii(1)> is supported and works well.  L<wmii(1)> was stealing the
+focus back from the desktop, but this was fixed.
 
 =item L<wmx(1)>
 
+L<wmx(1)> is supported and works well.
+
 =item L<xdwm(1)>
 
+L<xdwm(1)> does not support EWMH/NetWM for desktops.
+
 =item L<yeahwm(1)>
+
+L<yeahwm(1)> does not support EWMH/NetWM and is currently unsupported.
 
 =back
 
