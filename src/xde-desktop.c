@@ -693,6 +693,7 @@ xde_desktop_calculate_cells(XdeDesktop *desk)
 	(void) xoff;
 	(void) yoff;
 
+	/* FIXME */
 	/* get _NET_WORKAREA */
 	/* get _WIN_WORKAREA */
 	/* just use screen clipped */
