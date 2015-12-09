@@ -166,7 +166,18 @@ configuration file if possible before exiting gracefully.
 
 =back
 
-=head1 CONFIGURATION
+=head1 USAGE
+
+B<xde-desktop> currently uses F<libwnck+> or F<libwnck> to detect
+workspace changes and to identify the window manager.  The window
+manager must support some modicum of EWMH/NetWM compliance for the
+desktop to be effective.  Eventually I might make F<libwnck+> support
+GNOME1/WinWM, OSF/Motif and event just ICCCM compliant window managers,
+but, for now, some EWMH/NetWM compliance is needed.
+
+
+
+=head2 CONFIGURATION
 
 When B<xde-desktop> starts, it reads the configuration file located in
 F<$XDG_CONFIG_HOME/xde/desktop.ini> unless the configuration was
@@ -181,7 +192,7 @@ unnecessary to hand-edit the configuration file.  Format of the
 configuration file is subject to change without notice, there should be
 no need to rely upon it anyway.
 
-=head1 BEHAVIOUR
+=head2 BEHAVIOUR
 
 When B<xde-desktop> starts, it creates a window that is the size of the
 desktop and places it below all other windows.  To the user, it appears
@@ -191,7 +202,7 @@ to the root window.  For some window managers, scroll events are
 intercepted and used to change the desktop.  See L</WINDOW MANAGERS>,
 below.
 
-=head1 WINDOW MANAGERS
+=head2 WINDOW MANAGERS
 
 B<xde-desktop> supports all EWMH/NetWM 1.5, GNOME/WinWM and ICCCM 2.0
 compliant window managers.  It even supports some plain ICCCM/Motif WMH
