@@ -164,6 +164,9 @@ static Atom _XA_NET_CLIENT_LIST_STACKING;
 static Atom _XA_WIN_FOCUS;
 static Atom _XA_WIN_CLIENT_LIST;
 
+static Atom _XA_NET_WORKAREA;
+static Atom _XA_WIN_WORKAREA;
+
 typedef enum {
 	UseScreenDefault,               /* default screen by button */
 	UseScreenActive,                /* screen with active window */
@@ -308,7 +311,33 @@ typedef struct {
 	} attached;
 } XdeIcon;
 
+struct XdeScreen;
+typedef struct XdeScreen XdeScreen;
+
 typedef struct {
+	XdeScreen *xscr;
+	int index;
+	int rows;			/* number of rows in table */
+	int cols;			/* number of cols in table */
+	unsigned int xoff, yoff;
+	GList *paths;
+	GList *links;
+	GList *dires;
+	GList *files;
+	struct {
+		GList *links;
+		GList *dires;
+		GList *files;
+		GList *detop;
+		GHashTable *paths;
+		GHashTable *winds;
+	} icons;
+	GFile *directory;
+	GFileMonitor *monitor;
+	GdkRectangle workarea;
+} XdeDesktop;
+
+struct XdeScreen {
 	int index;			/* index */
 	GdkDisplay *disp;
 	GdkScreen *scrn;		/* screen */
@@ -332,7 +361,7 @@ typedef struct {
 	int cols;			/* number of cols in layout */
 	int desks;			/* number of desks in layout */
 	int ndsk;			/* number of desktops */
-	XdeImage **desktops;		/* the desktops */
+	XdeImage **backgrounds;		/* the desktops */
 	int current;			/* current desktop for this screen */
 	char *wmname;			/* window manager name (adjusted) */
 	Bool goodwm;			/* is the window manager usable? */
@@ -345,23 +374,10 @@ typedef struct {
 	Bool keyboard;			/* have a keyboard grab */
 	Bool pointer;			/* have a pointer grab */
 	GdkModifierType mask;
-	struct {
-		GList *links;
-		GList *dires;
-		GList *files;
-		GList *detop;
-		GHashTable *paths;
-		GHashTable *winds;
-	} icons;
-	unsigned int xoff, yoff;
-	GList *paths;
-	GList *links;
-	GList *dires;
-	GList *files;
 	GtkWidget *table;
-	GFile *directory;
-	GFileMonitor *monitor;
-} XdeScreen;
+	GPtrArray *desktops;		/* array of pointers to XdeDesktops */
+	XdeDesktop *desk;		/* current desktop */
+};
 
 XdeScreen *screens;			/* array of screens */
 
@@ -431,29 +447,29 @@ set_style(XdeScreen *xscr)
 {
 }
 
-void xde_desktop_update_desktop(XdeScreen *xscr);
+void xde_desktop_update_desktop(XdeDesktop *desk);
 
 static void
 xde_desktop_changed(GFileMonitor *monitor, GFile *file, GFile *other_file,
 		    GFileMonitorEvent event_type, gpointer user_data)
 {
-	XdeScreen *xscr = user_data;
-	xde_desktop_update_desktop(xscr);
+	XdeDesktop *desk = user_data;
+	xde_desktop_update_desktop(desk);
 }
 
 static void
-xde_desktop_watch_directory(XdeScreen *xscr, const char *label, const char *path)
+xde_desktop_watch_directory(XdeDesktop *desk, const char *label, const char *path)
 {
-	if (xscr->directory)
-		g_object_unref(xscr->directory);
-	xscr->directory = g_file_new_for_path(path);
-	if (xscr->monitor)
-		g_file_monitor_cancel(xscr->monitor);
-	xscr->monitor = g_file_monitor_directory(xscr->directory,
+	if (desk->directory)
+		g_object_unref(desk->directory);
+	desk->directory = g_file_new_for_path(path);
+	if (desk->monitor)
+		g_file_monitor_cancel(desk->monitor);
+	desk->monitor = g_file_monitor_directory(desk->directory,
 						 G_FILE_MONITOR_NONE |
 						 G_FILE_MONITOR_WATCH_MOUNTS |
 						 G_FILE_MONITOR_WATCH_MOVES, NULL, NULL);
-	g_signal_connect(G_OBJECT(xscr->monitor), "changed", G_CALLBACK(xde_desktop_changed), xscr);
+	g_signal_connect(G_OBJECT(desk->monitor), "changed", G_CALLBACK(xde_desktop_changed), desk);
 }
 
 void
@@ -468,23 +484,23 @@ xde_list_free(gpointer data)
   * find directory, just use $HOME/Desktop for now.
   */
 static void
-xde_desktop_read_desktop(XdeScreen *xscr)
+xde_desktop_read_desktop(XdeDesktop *desk)
 {
 	char *path;
 	DIR *dir;
 
-	g_list_free_full(xscr->paths, &xde_list_free);
-	g_list_free(xscr->links);
-	g_list_free(xscr->dires);
-	g_list_free(xscr->files);
+	g_list_free_full(desk->paths, &xde_list_free);
+	g_list_free(desk->links);
+	g_list_free(desk->dires);
+	g_list_free(desk->files);
 
-	xscr->paths = NULL;
-	xscr->links = NULL;
-	xscr->dires = NULL;
-	xscr->files = NULL;
+	desk->paths = NULL;
+	desk->links = NULL;
+	desk->dires = NULL;
+	desk->files = NULL;
 
 	path = g_strdup_printf("%s/Desktop", getenv("HOME") ? : "~");
-	xde_desktop_watch_directory(xscr, "Desktop", path);
+	xde_desktop_watch_directory(desk, "Desktop", path);
 	if ((dir = opendir(path))) {
 		struct dirent *d;
 
@@ -498,14 +514,14 @@ xde_desktop_read_desktop(XdeScreen *xscr)
 				continue;
 			name = g_strdup_printf("%s/%s", path, d->d_name);
 			if (d->d_type == DT_DIR) {
-				xscr->dires = g_list_append(xscr->dires, g_strdup_printf("%s/%s", path, d->d_name));
-				xscr->paths = g_list_append(xscr->paths, name);
+				desk->dires = g_list_append(desk->dires, g_strdup_printf("%s/%s", path, d->d_name));
+				desk->paths = g_list_append(desk->paths, name);
 			} else if (d->d_type == DT_LNK || d->d_type == DT_REG) {
 				if (strstr(d->d_name, ".desktop"))
-					xscr->links = g_list_append(xscr->links, name);
+					desk->links = g_list_append(desk->links, name);
 				else
-					xscr->files = g_list_append(xscr->files, name);
-				xscr->paths = g_list_append(xscr->paths, name);
+					desk->files = g_list_append(desk->files, name);
+				desk->paths = g_list_append(desk->paths, name);
 			} else
 				g_free(name);
 		}
@@ -524,7 +540,7 @@ xde_icon_free(gpointer data)
 }
 
 static XdeIcon *
-xde_icon_shortcut_new(XdeScreen *xscr, const char *path)
+xde_icon_shortcut_new(XdeDesktop *desk, const char *path)
 {
 	XdeIcon *icon = NULL;
 
@@ -533,7 +549,7 @@ xde_icon_shortcut_new(XdeScreen *xscr, const char *path)
 }
 
 static XdeIcon *
-xde_icon_directory_new(XdeScreen *xscr, const char *path)
+xde_icon_directory_new(XdeDesktop *desk, const char *path)
 {
 	XdeIcon *icon = NULL;
 
@@ -542,7 +558,7 @@ xde_icon_directory_new(XdeScreen *xscr, const char *path)
 }
 
 static XdeIcon *
-xde_icon_file_new(XdeScreen *xscr, const char *path)
+xde_icon_file_new(XdeDesktop *desk, const char *path)
 {
 	XdeIcon *icon = NULL;
 
@@ -583,42 +599,42 @@ xde_icon_hide(XdeIcon *icon)
   * that are no longer used are released to be freed.
   */
 static void
-xde_desktop_create_objects(XdeScreen *xscr)
+xde_desktop_create_objects(XdeDesktop *desk)
 {
 	GList *links, *dires, *files;
 	XdeIcon *icon;
 
-	if (!xscr->icons.paths) {
-		xscr->icons.paths =
+	if (!desk->icons.paths) {
+		desk->icons.paths =
 		    g_hash_table_new_full(&g_str_hash, &g_str_equal, NULL, xde_icon_free);
 	}
 
-	for (links = xscr->links; links; links = links->next) {
-		if (!(icon = g_hash_table_lookup(xscr->icons.paths, links->data)))
-			icon = xde_icon_shortcut_new(xscr, links->data);
+	for (links = desk->links; links; links = links->next) {
+		if (!(icon = g_hash_table_lookup(desk->icons.paths, links->data)))
+			icon = xde_icon_shortcut_new(desk, links->data);
 		if (icon->type == IconTypeShortcut)
-			xscr->icons.links = g_list_append(xscr->icons.links, icon);
+			desk->icons.links = g_list_append(desk->icons.links, icon);
 		else
-			xscr->icons.files = g_list_append(xscr->icons.files, icon);
-		xscr->icons.detop = g_list_append(xscr->icons.detop, icon);
-		g_hash_table_replace(xscr->icons.paths, links->data, icon);
+			desk->icons.files = g_list_append(desk->icons.files, icon);
+		desk->icons.detop = g_list_append(desk->icons.detop, icon);
+		g_hash_table_replace(desk->icons.paths, links->data, icon);
 	}
-	for (dires = xscr->dires; dires; dires = dires->next) {
-		if (!(icon = g_hash_table_lookup(xscr->icons.paths, dires->data)))
-			icon = xde_icon_directory_new(xscr, dires->data);
+	for (dires = desk->dires; dires; dires = dires->next) {
+		if (!(icon = g_hash_table_lookup(desk->icons.paths, dires->data)))
+			icon = xde_icon_directory_new(desk, dires->data);
 		if (icon) {
-			xscr->icons.dires = g_list_append(xscr->icons.dires, icon);
-			xscr->icons.detop = g_list_append(xscr->icons.detop, icon);
-			g_hash_table_replace(xscr->icons.paths, dires->data, icon);
+			desk->icons.dires = g_list_append(desk->icons.dires, icon);
+			desk->icons.detop = g_list_append(desk->icons.detop, icon);
+			g_hash_table_replace(desk->icons.paths, dires->data, icon);
 		}
 	}
-	for (files = xscr->files; files; files = files->next) {
-		if (!(icon = g_hash_table_lookup(xscr->icons.paths, files->data)))
-			icon = xde_icon_file_new(xscr, files->data);
+	for (files = desk->files; files; files = files->next) {
+		if (!(icon = g_hash_table_lookup(desk->icons.paths, files->data)))
+			icon = xde_icon_file_new(desk, files->data);
 		if (icon) {
-			xscr->icons.files = g_list_append(xscr->icons.files, icon);
-			xscr->icons.detop = g_list_append(xscr->icons.detop, icon);
-			g_hash_table_replace(xscr->icons.paths, files->data, icon);
+			desk->icons.files = g_list_append(desk->icons.files, icon);
+			desk->icons.detop = g_list_append(desk->icons.detop, icon);
+			g_hash_table_replace(desk->icons.paths, files->data, icon);
 		}
 	}
 }
@@ -633,7 +649,7 @@ xde_desktop_create_objects(XdeScreen *xscr)
   * now so that they do not persist until finalized.
   */
 static void
-xde_desktop_create_windows(XdeScreen *xscr)
+xde_desktop_create_windows(XdeDesktop *desk)
 {
 	GList *detop;
 	GHashTable *winds;
@@ -642,7 +658,7 @@ xde_desktop_create_windows(XdeScreen *xscr)
 
 	winds = g_hash_table_new_full(&g_int_hash, &g_int_equal, NULL, NULL);
 
-	for (detop = xscr->icons.detop; detop; detop = detop->next) {
+	for (detop = desk->icons.detop; detop; detop = detop->next) {
 		XdeIcon *icon = detop->data;
 		XID xid;
 
@@ -650,12 +666,12 @@ xde_desktop_create_windows(XdeScreen *xscr)
 		g_hash_table_replace(winds, (gpointer) xid, icon);
 	}
 
-	g_hash_table_iter_init(&iter, xscr->icons.winds);
+	g_hash_table_iter_init(&iter, desk->icons.winds);
 	while (g_hash_table_iter_next(&iter, &key, &value))
 		if (!g_hash_table_lookup(winds, key))
 			xde_icon_hide(value);
-	g_hash_table_destroy(xscr->icons.winds);
-	xscr->icons.winds = winds;
+	g_hash_table_destroy(desk->icons.winds);
+	desk->icons.winds = winds;
 }
 
 /** @brief calculate cells
@@ -665,19 +681,47 @@ xde_desktop_create_windows(XdeScreen *xscr)
   * _NET_WORKAREA or _WIN_WORKAREA properties on the root window.
   * Returns a boolean indicating whether the calculation changed.
   */
-static void
-xde_desktop_calculate_cells(XdeScreen *xscr)
+static int
+xde_desktop_calculate_cells(XdeDesktop *desk)
 {
-}
+#if 0
+	int x, y, w, h;
+	int cols, rows, xoff, yoff;
 
+	(void) cols;
+	(void) rows;
+	(void) xoff;
+	(void) yoff;
+
+	/* get _NET_WORKAREA */
+	/* get _WIN_WORKAREA */
+	/* just use screen clipped */
+	if ((desk->workarea.width || desk->workarea.height) &&
+	    desk->workarea.x == x &&
+	    desk->workarea.y == y && desk->workarea.width == w && desk->workarea.height == h) {
+		return (0);
+	}
+	desk->workarea.x = x;
+	desk->workarea.y = y;
+	desk->workarea.width = w;
+	desk->workarea.height = h;
+	/* leave at least 1/2 a cell ((36,42) pixels) around the desktop area to
+	   accomodate window managers that do not account for panels. */
+	cols = desk->cols = (int) (w / ICON_WIDE);
+	rows = desk->rows = (int) (h / ICON_HIGH);
+	xoff = desk->xoff = (int) ((w - cols * ICON_WIDE) / 2);
+	yoff = desk->yoff = (int) ((h - rows * ICON_HIGH) / 2);
+#endif
+	return (1);
+}
 static void
-next_cell(XdeScreen *xscr, int *col, int *row, int *x, int *y)
+next_cell(XdeDesktop *desk, int *col, int *row, int *x, int *y)
 {
 	*row += 1;
 	*y += ICON_HIGH;
-	if (*row >= xscr->rows) {
+	if (*row >= desk->rows) {
 		*row = 0;
-		*y = xscr->rows;
+		*y = desk->rows;
 		*col += 1;
 		*x += ICON_WIDE;
 	}
@@ -713,43 +757,44 @@ xde_icon_place(XdeIcon *icon, GtkWidget *table, int col, int row)
   * contents.
   */
 static void
-xde_desktop_arrange_icons(XdeScreen *xscr)
+xde_desktop_arrange_icons(XdeDesktop *desk)
 {
 	int col = 0, row = 0;
-	int x = xscr->xoff, y = xscr->yoff;
+	int x = desk->xoff, y = desk->yoff;
+	XdeScreen *xscr = desk->xscr;
 
-	if (xscr->icons.links && col < xscr->cols) {
+	if (desk->icons.links && col < desk->cols) {
 		GList *links;
 
-		for (links = xscr->icons.links; links; links = links->next) {
+		for (links = desk->icons.links; links; links = links->next) {
 			xde_icon_place(links->data, xscr->table, col, row);
-			xscr->icons.detop = g_list_append(xscr->icons.detop, links->data);
-			next_cell(xscr, &col, &row, &x, &y);
-			if (col < xscr->cols)
+			desk->icons.detop = g_list_append(desk->icons.detop, links->data);
+			next_cell(desk, &col, &row, &x, &y);
+			if (col < desk->cols)
 				continue;
 			break;
 		}
 	}
-	if (xscr->icons.dires && col < xscr->cols) {
+	if (desk->icons.dires && col < desk->cols) {
 		GList *dires;
 
-		for (dires = xscr->icons.dires; dires; dires = dires->next) {
+		for (dires = desk->icons.dires; dires; dires = dires->next) {
 			xde_icon_place(dires->data, xscr->table, col, row);
-			xscr->icons.detop = g_list_append(xscr->icons.detop, dires->data);
-			next_cell(xscr, &col, &row, &x, &y);
-			if (col < xscr->cols)
+			desk->icons.detop = g_list_append(desk->icons.detop, dires->data);
+			next_cell(desk, &col, &row, &x, &y);
+			if (col < desk->cols)
 				continue;
 			break;
 		}
 	}
-	if (xscr->icons.files && col < xscr->cols) {
+	if (desk->icons.files && col < desk->cols) {
 		GList *files;
 
-		for (files = xscr->icons.files; files; files = files->next) {
+		for (files = desk->icons.files; files; files = files->next) {
 			xde_icon_place(files->data, xscr->table, col, row);
-			xscr->icons.detop = g_list_append(xscr->icons.detop, files->data);
-			next_cell(xscr, &col, &row, &x, &y);
-			if (col < xscr->cols)
+			desk->icons.detop = g_list_append(desk->icons.detop, files->data);
+			next_cell(desk, &col, &row, &x, &y);
+			if (col < desk->cols)
 				continue;
 			break;
 		}
@@ -762,11 +807,11 @@ xde_desktop_arrange_icons(XdeScreen *xscr)
   * icon hide itself.
   */
 void
-xde_desktop_hide_icons(XdeScreen *xscr)
+xde_desktop_hide_icons(XdeDesktop *desk)
 {
 	GList *detop;
 
-	for (detop = xscr->icons.detop; detop; detop = detop->next)
+	for (detop = desk->icons.detop; detop; detop = detop->next)
 		xde_icon_hide(detop->data);
 }
 
@@ -777,11 +822,11 @@ xde_desktop_hide_icons(XdeScreen *xscr)
   * icon show itself.
   */
 static void
-xde_desktop_show_icons(XdeScreen *xscr)
+xde_desktop_show_icons(XdeDesktop *desk)
 {
 	GList *detop;
 
-	for (detop = xscr->icons.detop; detop; detop = detop->next)
+	for (detop = desk->icons.detop; detop; detop = detop->next)
 		xde_icon_show(detop->data);
 }
 
@@ -791,20 +836,20 @@ xde_desktop_show_icons(XdeScreen *xscr)
   * or rereading the $HOME/Desktop directory.
   */
 void
-xde_desktop_update_desktop(XdeScreen *xscr)
+xde_desktop_update_desktop(XdeDesktop *desk)
 {
 	OPRINTF("==> Reading desktop...\n");
-	xde_desktop_read_desktop(xscr);
+	xde_desktop_read_desktop(desk);
 	OPRINTF("==> Creating objects...\n");
-	xde_desktop_create_objects(xscr);
+	xde_desktop_create_objects(desk);
 	OPRINTF("==> Creating windows...\n");
-	xde_desktop_create_windows(xscr);
+	xde_desktop_create_windows(desk);
 	OPRINTF("==> Calculating cells...\n");
-	xde_desktop_calculate_cells(xscr);
+	xde_desktop_calculate_cells(desk);
 	OPRINTF("==> Arranging icons...\n");
-	xde_desktop_arrange_icons(xscr);
+	xde_desktop_arrange_icons(desk);
 	OPRINTF("==> Showing icons...\n");
-	xde_desktop_show_icons(xscr);
+	xde_desktop_show_icons(desk);
 }
 
 void
@@ -2673,6 +2718,28 @@ update_layout(XdeScreen *xscr, Atom prop)
 	refresh_layout(xscr); /* XXX: should be deferred */
 }
 
+#if 0
+static void
+update_workarea(XdeScreen *xscr, Atom prop)
+{
+	Display *dpy = GDK_DISPLAY_XDISPLAY(xscr->disp);
+	Window root = RootWindow(dpy, xscr->index);
+	Atom actual = None;
+	int format = 0, num;
+	unsigned long nitems = 0, after = 0, *data = NULL;
+	Bool propok = False;
+
+	DPRINT();
+
+	if (prop == None || prop == _XA_NET_WORKAREA) {
+	}
+	if (prop == None || prop == _XA_WIN_WORKAREA) {
+	}
+	if (!propok)
+		EPRINTF("wrong property passed\n");
+}
+#endif
+
 static GdkFilterReturn
 event_handler_PropertyNotify(Display *dpy, XEvent *xev, XdeScreen *xscr)
 {
@@ -3860,6 +3927,12 @@ startup(int argc, char *argv[])
 
 	atom = gdk_atom_intern_static_string("_WIN_CLIENT_LIST");
 	_XA_WIN_CLIENT_LIST = gdk_x11_atom_to_xatom_for_display(disp, atom);
+
+	atom = gdk_atom_intern_static_string("_NET_WORKAREA");
+	_XA_NET_WORKAREA = gdk_x11_atom_to_xatom_for_display(disp, atom);
+
+	atom = gdk_atom_intern_static_string("_WIN_WORKAREA");
+	_XA_WIN_WORKAREA = gdk_x11_atom_to_xatom_for_display(disp, atom);
 
 	scrn = gdk_display_get_default_screen(disp);
 	root = gdk_screen_get_root_window(scrn);
