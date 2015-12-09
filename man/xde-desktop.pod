@@ -185,16 +185,47 @@ idiosyncrasies handled for them are as follows:
 
 =over
 
-=item L<fluxbox(1)>
+=item L<2bwm(1)>
+
+=item L<adwm(1)>
+
+=item L<aewm(1)>
+
+=item L<aewm++(1)>
+
+=item L<afterstep(1)>
+
+=item L<awesome(1)>
 
 =item L<blackbox(1)>
 
-=item L<openbox(1)>
+=item L<bspwm(1)>
 
-L<openbox(1)> has a strange idea for changing desktops using scroll
-events.  Scroll events only change desktops within a row of the desktop
-layout.  B<xde-desktop> intercepts scroll events on the desktop and
-makes this consistent with other window managers.
+=item L<ctwm(1)>
+
+=item L<cwm(1)>
+
+=item L<dtwm(1)>
+
+=item L<dwm(1)>
+
+=item L<echinus(1)>
+
+=item L<etwm(1)>
+
+=item L<failsafewm(1)>
+
+=item L<fluxbox(1)>
+
+=item L<flwm(1)>
+
+=item L<glasswm(1)>
+
+=item L<goomwwm(1)>
+
+=item L<herbstluftwm(1)>
+
+=item L<i3(1)>
 
 =item L<icewm(1)>
 
@@ -217,6 +248,23 @@ moves left when others move right and vise versa.  B<xde-desktop>
 intercepts scroll events on the desktop for this window manager and
 makes this consistent with other window managers.
 
+=item L<larswm(1)>
+
+=item L<matwm2(1)>
+
+=item L<metacity(1)>
+
+=item L<mvwm(1)>
+
+=item L<mwm(1)>
+
+=item L<openbox(1)>
+
+L<openbox(1)> has a strange idea for changing desktops using scroll
+events.  Scroll events only change desktops within a row of the desktop
+layout.  B<xde-desktop> intercepts scroll events on the desktop and
+makes this consistent with other window managers.
+
 =item L<pekwm(1)>
 
 L<pekwm(1)> has a strange idea for changing desktops using scroll
@@ -224,17 +272,31 @@ events.  Scroll events only change desktops within a row of the desktop
 layout.  B<xde-desktop> intercepts scroll events on the desktop and
 makes this consistent with other window managers.
 
-=item L<wmaker(1)>
-
-=item L<fvwm(1)>
-
-=item L<afterstep(1)>
-
-=item L<metacity(1)>
+=item L<spectrwm(1)>
 
 =item L<twm(1)>
 
-=item L<mwm(1)>
+=item L<uwm(1)>
+
+=item L<velox(1)>
+
+=item L<vtwm(1)>
+
+=item L<waimea(1)>
+
+=item L<wind(1)>
+
+=item L<wm2(1)>
+
+=item L<wmaker(1)>
+
+=item L<wmii(1)>
+
+=item L<wmx(1)>
+
+=item L<xdwm(1)>
+
+=item L<yeahwm(1)>
 
 =back
 

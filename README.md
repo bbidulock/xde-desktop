@@ -1,7 +1,7 @@
 
 ## xde-desktop
 
-Package xde-desktop-0.1.23 was released under GPL license 2015-12-06.
+Package xde-desktop-0.1.31 was released under GPL license 2015-12-08.
 
 This package provides a desktop for the XDE (X Desktop Environment).
 As with other XDE utilties, this package is intended on working with
@@ -13,7 +13,7 @@ to run the desktop.
 
 ### Release
 
-This is the `xde-desktop-0.1.23` package, released 2015-12-06.  This release,
+This is the `xde-desktop-0.1.31` package, released 2015-12-08.  This release,
 and the latest version, can be obtained from the GitHub repository at
 https://github.com/bbidulock/xde-desktop, using a command such as:
 
