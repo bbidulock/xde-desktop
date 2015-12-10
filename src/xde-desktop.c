@@ -359,8 +359,7 @@ struct XdeScreen {
 	guint timer;			/* timer source of running timer */
 	int rows;			/* number of rows in layout */
 	int cols;			/* number of cols in layout */
-	int desks;			/* number of desks in layout */
-	int ndsk;			/* number of desktops */
+	int desks;			/* number of desktops */
 	XdeImage **backgrounds;		/* the desktops */
 	int current;			/* current desktop for this screen */
 	char *wmname;			/* window manager name (adjusted) */
@@ -2172,38 +2171,12 @@ update_workarea(XdeScreen *xscr, Atom prop)
 	int format = 0;
 	unsigned long nitems = 0, after = 0, *data = NULL, i, d;
 	long length;
-	Bool propok = False;
+	Bool propok = False, changed = False;
 	XdeDesktop *desk;
 	GdkRectangle workarea = { 0, };
 
 	DPRINT();
 
-	if (prop == None || prop == _XA_NET_WORKAREA) {
-		length = 4;
-	      net_again:
-		if (XGetWindowProperty
-		    (dpy, root, _XA_NET_WORKAREA, 0, length, False, XA_CARDINAL, &actual,
-		     &format, &nitems, &after, (unsigned char **) &data) == Success
-		    && format == 32 && actual && nitems >= 4 && data) {
-			if (after > 0 && length == 4) {
-				XFree(data);
-				data = NULL;
-				length += (after + 3) >> 2;
-				goto net_again;
-			}
-			for (i = 0, d = 0; d < (nitems >> 2); d++, i += 4) {
-				workarea.x = data[i + 0];
-				workarea.y = data[i + 1];
-				workarea.width = data[i + 2];
-				workarea.height = data[i + 3];
-			}
-		}
-		if (data) {
-			XFree(data);
-			data = NULL;
-		}
-		propok = True;
-	}
 	if (prop == None || prop == _XA_WIN_WORKAREA) {
 		length = 4;
 	      win_again:
@@ -2230,6 +2203,46 @@ update_workarea(XdeScreen *xscr, Atom prop)
 				desk->workarea.y = workarea.y;
 				desk->workarea.width = workarea.width;
 				desk->workarea.height = workarea.height;
+				changed = True;
+			}
+		}
+		if (data) {
+			XFree(data);
+			data = NULL;
+		}
+		propok = True;
+	}
+	if (prop == None || prop == _XA_NET_WORKAREA) {
+		length = 4;
+	      net_again:
+		if (XGetWindowProperty
+		    (dpy, root, _XA_NET_WORKAREA, 0, length, False, XA_CARDINAL, &actual,
+		     &format, &nitems, &after, (unsigned char **) &data) == Success
+		    && format == 32 && actual && nitems >= 4 && data) {
+			if (after > 0 && length == 4) {
+				XFree(data);
+				data = NULL;
+				length += (after + 3) >> 2;
+				goto net_again;
+			}
+			for (i = 0, d = 0; d < (nitems >> 2) && d < xscr->desks; d++, i += 4) {
+				XdeDesktop *desk;
+
+				workarea.x = data[i + 0];
+				workarea.y = data[i + 1];
+				workarea.width = data[i + 2];
+				workarea.height = data[i + 3];
+				desk = g_ptr_array_index(xscr->desktops, d);
+				if (desk->workarea.x != workarea.x ||
+				    desk->workarea.y != workarea.y ||
+				    desk->workarea.width != workarea.width ||
+				    desk->workarea.height != workarea.height) {
+					desk->workarea.x = workarea.x;
+					desk->workarea.y = workarea.y;
+					desk->workarea.width = workarea.width;
+					desk->workarea.height = workarea.height;
+					changed = True;
+				}
 			}
 		}
 		if (data) {
@@ -2240,6 +2253,9 @@ update_workarea(XdeScreen *xscr, Atom prop)
 	}
 	if (!propok)
 		EPRINTF("wrong property passed\n");
+	if (changed) {
+		/* FIXME: we need to update the layout of icons on the desktop. */
+	}
 }
 
 static void
