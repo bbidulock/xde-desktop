@@ -316,6 +316,7 @@ typedef struct XdeScreen XdeScreen;
 
 typedef struct {
 	XdeScreen *xscr;
+	Pixmap pixmap;			/* current pixmap for this desktop */
 	int index;
 	int rows;			/* number of rows in table */
 	int cols;			/* number of cols in table */
@@ -346,7 +347,6 @@ struct XdeScreen {
 	gint nmon;			/* number of monitors */
 	XdeMonitor *mons;		/* monitors for this screen */
 	Bool mhaware;			/* multi-head aware NetWM */
-	Pixmap pixmap;			/* current pixmap for the entire screen */
 	char *theme;			/* XDE theme name */
 	GKeyFile *entry;		/* XDE theme file entry */
 	int nimg;			/* number of images */
@@ -386,55 +386,6 @@ typedef enum  {
 	TARGET_XDS = 3,
 	TARGET_RAW = 4,
 } TargetType;
-
-static void
-xde_desk_button_press_event()
-{
-}
-
-static void
-xde_desk_button_release_event()
-{
-}
-
-#if 0
-static void
-xde_desk_motion_notify_event()
-{
-}
-
-static void
-xde_desk_expose_event()
-{
-}
-#endif
-
-static void
-xde_desk_scroll_event()
-{
-}
-
-#if 0
-static void
-xde_desk_drag_drop()
-{
-}
-
-static void
-xde_desk_drag_data_received()
-{
-}
-
-static void
-xde_desk_drag_motion()
-{
-}
-
-static void
-xde_desk_drag_leave()
-{
-}
-#endif
 
 /** @brief set desktop style
   *
@@ -852,53 +803,64 @@ xde_desktop_update_desktop(XdeDesktop *desk)
 	xde_desktop_show_icons(desk);
 }
 
+static gboolean button_press_event(GtkWidget *widget, GdkEvent *event, gpointer user);
+static gboolean button_release_event(GtkWidget *widget, GdkEvent *event, gpointer user);
+static gboolean scroll_event(GtkWidget *widget, GdkEvent *event, gpointer user);
+static gboolean key_press_event(GtkWidget *widget, GdkEvent *event, gpointer user);
+static gboolean key_release_event(GtkWidget *widget, GdkEvent *event, gpointer user);
+
 void
 create_desktop(XdeScreen *xscr)
 {
-	GtkWindow *window;
-	GdkWindow *win;
+	GtkWindow *win;
+	GdkWindow *window;
+	char *geometry;
 	GtkWidget *aln;
 	GtkWidget *tab;
-	char *geometry;
+
 #if 0
 	GtkTargetEntry *targets;
 	GtkWidget *fix;
 #endif
+	GdkGeometry hints = {
+		.min_width = xscr->width,
+		.min_height = xscr->height,
+		.max_width = xscr->width,
+		.max_height = xscr->height,
+	};
 
-	window = xscr->desktop = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
-	gtk_window_set_accept_focus(window, FALSE);
+	win = xscr->desktop = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
+	gtk_window_set_screen(win, xscr->scrn);
+	gtk_window_set_accept_focus(win, FALSE);
 	gtk_window_set_auto_startup_notification(TRUE);
-	gtk_window_set_decorated(window, FALSE);
-	gtk_window_set_default_size(window, xscr->width, xscr->height);
-	gtk_window_set_deletable(window, FALSE);
-	gtk_window_set_focus_on_map(window, FALSE);
+	gtk_window_set_decorated(win, FALSE);
+	gtk_window_set_default_size(win, xscr->width, xscr->height);
+	gtk_window_set_geometry_hints(win, GTK_WIDGET(win), &hints,
+				      GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE | GDK_HINT_USER_SIZE);
+	gtk_window_set_deletable(win, FALSE);
+	gtk_window_set_focus_on_map(win, FALSE);
 #if 0
-	gtk_window_set_frame_dimensions(window, 0, 0, 0, 0);
+	gtk_window_set_frame_dimensions(win, 0, 0, 0, 0);
+	gtk_window_fullscreen(win);
 #endif
-	gtk_window_fullscreen(window);
-	gtk_window_set_gravity(window, GDK_GRAVITY_STATIC);
-	gtk_window_set_has_frame(window, FALSE);
+	gtk_window_set_gravity(win, GDK_GRAVITY_STATIC);
+	gtk_window_set_has_frame(win, FALSE);
 #if 0
-	gtk_window_set_keep_below(window, TRUE);
+	gtk_window_set_keep_below(win, TRUE);
 #endif
-	gtk_window_move(window, 0, 0);
-	gtk_window_set_opacity(window, 1.0);
-	gtk_window_set_position(window, GTK_WIN_POS_CENTER_ALWAYS);
-	gtk_window_set_resizable(window, FALSE);
-	gtk_window_resize(window, xscr->width, xscr->height);
-	gtk_window_set_skip_pager_hint(window, TRUE);
-	gtk_window_set_skip_taskbar_hint(window, TRUE);
-	gtk_window_stick(window);
-	gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_DESKTOP);
+	gtk_window_move(win, 0, 0);
+	gtk_window_set_opacity(win, 1.0);
+	gtk_window_set_position(win, GTK_WIN_POS_CENTER_ALWAYS);
+	gtk_window_set_resizable(win, FALSE);
+	gtk_window_resize(win, xscr->width, xscr->height);
+	gtk_window_set_skip_pager_hint(win, TRUE);
+	gtk_window_set_skip_taskbar_hint(win, TRUE);
+	gtk_window_stick(win);
+	gtk_window_set_type_hint(win, GDK_WINDOW_TYPE_HINT_DESKTOP);
 
-	gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
-	if (!gtk_widget_get_double_buffered(GTK_WIDGET(window))) {
-		DPRINTF("Setting double buffering!\n");
-		gtk_widget_set_double_buffered(GTK_WIDGET(window), TRUE);
-
-	} else {
-		DPRINTF("Double buffering already set!\n");
-	}
+	gtk_widget_set_app_paintable(GTK_WIDGET(win), TRUE);
+	if (!gtk_widget_get_double_buffered(GTK_WIDGET(win)))
+		gtk_widget_set_double_buffered(GTK_WIDGET(win), TRUE);
 #if 0
 	targets = calloc(5, sizeof(*targets));
 
@@ -918,71 +880,81 @@ create_desktop(XdeScreen *xscr)
 	targets[3].flags = 0;
 	targets[3].info = TARGET_RAW;
 
-	gtk_drag_dest_set(GTK_WIDGET(window), GTK_DEST_DEFAULT_DROP, targets, 4,
+	gtk_drag_dest_set(GTK_WIDGET(win), GTK_DEST_DEFAULT_DROP, targets, 4,
 			  GDK_ACTION_COPY | GDK_ACTION_ASK | GDK_ACTION_MOVE |
 			  GDK_ACTION_LINK | GDK_ACTION_PRIVATE);
-	gtk_drag_dest_add_image_targets(GTK_WIDGET(window));
-	gtk_drag_dest_add_text_targets(GTK_WIDGET(window));
-	gtk_drag_dest_add_uri_targets(GTK_WIDGET(window));
+	gtk_drag_dest_add_image_targets(GTK_WIDGET(win));
+	gtk_drag_dest_add_text_targets(GTK_WIDGET(win));
+	gtk_drag_dest_add_uri_targets(GTK_WIDGET(win));
 
 	free(targets);
 #endif
-	gtk_widget_set_size_request(GTK_WIDGET(window), xscr->width, xscr->height);
+	gtk_widget_set_size_request(GTK_WIDGET(win), xscr->width, xscr->height);
 	geometry = g_strdup_printf("%dx%d+0+0", xscr->width, xscr->height);
-	gtk_window_parse_geometry(window, geometry);
+	gtk_window_parse_geometry(win, geometry);
 	g_free(geometry);
-	gtk_widget_add_events(GTK_WIDGET(window),
+	gtk_widget_add_events(GTK_WIDGET(win),
 			      GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
 			      GDK_BUTTON1_MOTION_MASK | GDK_BUTTON2_MOTION_MASK |
 			      GDK_BUTTON3_MOTION_MASK);
-	gtk_widget_realize(GTK_WIDGET(window));
-	win = gtk_widget_get_window(GTK_WIDGET(window));
-	gdk_window_set_override_redirect(win, TRUE);
-	gdk_window_set_back_pixmap(win, NULL, TRUE);
-	g_signal_connect(G_OBJECT(window), "button_press_event",
-			 G_CALLBACK(xde_desk_button_press_event), xscr);
-	g_signal_connect(G_OBJECT(window), "button_release_event",
-			 G_CALLBACK(xde_desk_button_release_event), xscr);
+	gtk_widget_realize(GTK_WIDGET(win));
+	window = gtk_widget_get_window(GTK_WIDGET(win));
+	gdk_window_set_override_redirect(window, TRUE);
+	gdk_window_set_back_pixmap(window, NULL, TRUE);
+	g_signal_connect(G_OBJECT(win), "button_press_event", G_CALLBACK(button_press_event), xscr);
+	g_signal_connect(G_OBJECT(win), "button_release_event", G_CALLBACK(button_release_event), xscr);
 #if 0
-	g_signal_connect(G_OBJECT(window), "motion_notify_event",
-			 G_CALLBACK(xde_desk_motion_notify_event), xscr);
-	g_signal_connect(G_OBJECT(window), "expose_event",
-			 G_CALLBACK(xde_desk_expose_event), xscr);
+	g_signal_connect(G_OBJECT(win), "motion_notify_event", G_CALLBACK(motion_notify_event), xscr);
+	g_signal_connect(G_OBJECT(win), "expose_event", G_CALLBACK(expose_event), xscr);
 #endif
-	g_signal_connect(G_OBJECT(window), "scroll_event",
-			 G_CALLBACK(xde_desk_scroll_event), xscr);
+	g_signal_connect(G_OBJECT(win), "scroll_event", G_CALLBACK(scroll_event), xscr);
 #if 0
-	g_signal_connect(G_OBJECT(window), "drag_drop",
-			 G_CALLBACK(xde_desk_drag_drop), xscr);
-	g_signal_connect(G_OBJECT(window), "drag_data_received",
-			 G_CALLBACK(xde_desk_drag_data_received), xscr);
-	g_signal_connect(G_OBJECT(window), "drag_motion",
-			 G_CALLBACK(xde_desk_drag_motion), xscr);
-	g_signal_connect(G_OBJECT(window), "drag_leave",
-			 G_CALLBACK(xde_desk_drag_leave), xscr);
+	g_signal_connect(G_OBJECT(win), "drag_drop", G_CALLBACK(drag_drop), xscr);
+	g_signal_connect(G_OBJECT(win), "drag_data_received", G_CALLBACK(drag_data_received), xscr);
+	g_signal_connect(G_OBJECT(win), "drag_motion", G_CALLBACK(drag_motion), xscr);
+	g_signal_connect(G_OBJECT(win), "drag_leave", G_CALLBACK(drag_leave), xscr);
 #endif
-	aln = gtk_alignment_new(0.5, 0.5, 1.0, 1.0);
-	// fix = gtk_fixed_new();
-	// gtk_widget_set_size_request(fix, xscr->width, xscr->height);
+#if 0
+	g_signal_connect(G_OBJECT(win), "enter_notify_event", G_CALLBACK(enter_notify_event), xscr);
+	g_signal_connect(G_OBJECT(win), "focus_in_event", G_CALLBACK(focus_in_event), xscr);
+	g_signal_connect(G_OBJECT(win), "focus_out_event", G_CALLBACK(focus_out_event), xscr);
+	g_signal_connect(G_OBJECT(win), "grab_broken_event", G_CALLBACK(grab_broken_event), xscr);
+	g_signal_connect(G_OBJECT(win), "grab_focus", G_CALLBACK(grab_focus), xscr);
+#endif
+	g_signal_connect(G_OBJECT(win), "key_press_event", G_CALLBACK(key_press_event), xscr);
+	g_signal_connect(G_OBJECT(win), "key_release_event", G_CALLBACK(key_release_event), xscr);
+#if 0
+	g_signal_connect(G_OBJECT(win), "leave_notify_event", G_CALLBACK(leave_notify_event), xscr);
+	g_signal_connect(G_OBJECT(win), "map_event", G_CALLBACK(map_event), xscr);
+	g_signal_connect(G_OBJECT(win), "realize", G_CALLBACK(widget_realize), xscr);
+#endif
 
-	gtk_container_set_border_width(GTK_CONTAINER(window), 0);
-	// gtk_container_add(GTK_CONTAINER(window), fix);
-	gtk_container_add(GTK_CONTAINER(window), aln);
+	aln = gtk_alignment_new(0.5, 0.5, 1.0, 1.0);
+//	fix = gtk_fixed_new();
+//	gtk_widget_set_size_request(fix, xscr->width, xscr->height);
+
+	gtk_container_set_border_width(GTK_CONTAINER(win), 0);
+//	gtk_container_add(GTK_CONTAINER(win), fix);
+	gtk_container_add(GTK_CONTAINER(win), aln);
+
 	tab = xscr->table = gtk_table_new(1, 1, TRUE);
+
 	gtk_table_set_col_spacings(GTK_TABLE(tab), 0);
 	gtk_table_set_row_spacings(GTK_TABLE(tab), 0);
 	gtk_table_set_homogeneous(GTK_TABLE(tab), TRUE);
 	gtk_widget_set_size_request(tab, ICON_WIDE, ICON_HIGH);
-	gtk_widget_set_tooltip_text(tab, "Click Me!");
-	// gtk_fixed_put(GTK_FIXED(fix), tab, 0, 0);
+//	gtk_widget_set_tooltip_text(tab, "Click Me!");
+//	gtk_fixed_put(GTK_FIXED(fix), tab, 0, 0);
+
 	gtk_container_add(GTK_CONTAINER(aln), tab);
 
 	set_style(xscr);
-	gtk_widget_show(tab);
-	// gtk_widget_show(fix);
-	gtk_widget_show(aln);
-	gtk_widget_show(GTK_WIDGET(window));
-	gdk_window_lower(win);
+	gtk_widget_show(GTK_WIDGET(tab));
+//	gtk_widget_show(GTK_WIDGET(fix));
+	gtk_widget_show(GTK_WIDGET(aln));
+	gtk_widget_show(GTK_WIDGET(win));
+
+	gdk_window_lower(window);
 }
 
 #if 0
@@ -1228,9 +1200,9 @@ get_desktop_layout_selection(XdeScreen *xscr)
 #endif
 
 static void
-workspace_destroyed(WnckScreen *wnck, WnckWorkspace *space, gpointer user)
+workspace_destroyed(WnckScreen *wnck, WnckWorkspace *space, gpointer user_data)
 {
-	XdeScreen *xscr = (typeof(xscr)) user;
+	XdeScreen *xscr = user_data;
 
 	DPRINT();
 	if (!xscr) {
@@ -1240,9 +1212,9 @@ workspace_destroyed(WnckScreen *wnck, WnckWorkspace *space, gpointer user)
 }
 
 static void
-workspace_created(WnckScreen *wnck, WnckWorkspace *space, gpointer user)
+workspace_created(WnckScreen *wnck, WnckWorkspace *space, gpointer user_data)
 {
-	XdeScreen *xscr = (typeof(xscr)) user;
+	XdeScreen *xscr = user_data;
 
 	DPRINT();
 	if (!xscr) {
@@ -2271,116 +2243,166 @@ init_window(XdeScreen *xscr)
 	GtkWindow *win;
 	GdkWindow *window;
 	char *geometry;
+	GtkWidget *aln;
+	GtkTable *tab;
+
+#if 0
+	GtkTargetEntry *targets;
+	GtkWidget *fix;
+#endif
+	GdkGeometry hints = {
+		.min_width = xscr->width,
+		.min_height = xscr->height,
+		.max_width = xscr->width,
+		.max_height = xscr->height,
+	};
 
 	xscr->desktop = win = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
 	gtk_window_set_screen(win, xscr->scrn);
 	gtk_window_set_accept_focus(win, FALSE);
 	gtk_window_set_auto_startup_notification(TRUE);
 	gtk_window_set_decorated(win, FALSE);
-	gtk_window_set_default_size(win, xscr->width - 2, xscr->height - 2);
-
-	GdkGeometry hints = {
-		.min_width = xscr->width - 2,
-		.min_height = xscr->height - 2,
-		.max_width = xscr->width - 2,
-		.max_height = xscr->height - 2,
-	};
+	gtk_window_set_default_size(win, xscr->width, xscr->height);
 	gtk_window_set_geometry_hints(win, GTK_WIDGET(win), &hints,
 				      GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE | GDK_HINT_USER_SIZE);
-
 	gtk_window_set_deletable(win, FALSE);
 	gtk_window_set_focus_on_map(win, FALSE);
-//      gtk_window_set_frame_dimensions(win, 0, 0, 0, 0);
-//      gtk_window_fullscreen(win);
+#if 0
+	gtk_window_set_frame_dimensions(win, 0, 0, 0, 0);
+	gtk_window_fullscreen(win);
+#endif
 	gtk_window_set_gravity(win, GDK_GRAVITY_STATIC);
 	gtk_window_set_has_frame(win, FALSE);
-//      gtk_window_set_keep_below(win, TRUE);
-	gtk_window_move(win, 1, 1);
+#if 0
+	gtk_window_set_keep_below(win, TRUE);
+#endif
+	gtk_window_move(win, 0, 0);
 	gtk_window_set_opacity(win, 1.0);
 	gtk_window_set_position(win, GTK_WIN_POS_CENTER_ALWAYS);
 	gtk_window_set_resizable(win, FALSE);
-	gtk_window_resize(win, xscr->width - 2, xscr->height - 2);
+	gtk_window_resize(win, xscr->width, xscr->height);
 	gtk_window_set_skip_pager_hint(win, TRUE);
 	gtk_window_set_skip_taskbar_hint(win, TRUE);
 	gtk_window_stick(win);
 	gtk_window_set_type_hint(win, GDK_WINDOW_TYPE_HINT_DESKTOP);
-//      gtk_window_set_app_paintable(win, TRUE);
+
+	gtk_widget_set_app_paintable(GTK_WIDGET(win), TRUE);
 	if (!gtk_widget_get_double_buffered(GTK_WIDGET(win)))
 		gtk_widget_set_double_buffered(GTK_WIDGET(win), TRUE);
-	gtk_widget_set_size_request(GTK_WIDGET(win), xscr->width - 2, xscr->height - 2);
+#if 0
+	targets = calloc(5, sizeof(*targets));
 
-	geometry = g_strdup_printf("%dx%d+1+1", xscr->width - 2, xscr->height - 2);
+	targets[0].target = "text/uri-list";
+	targets[0].flags = 0;
+	targets[0].info = TARGET_URI_LIST;
+
+	targets[1].target = "text/x-moz-url";
+	targets[1].flags = 0;
+	targets[1].info = TARGET_MOZ_URL;
+
+	targets[2].target = "XdndDirectSave0";
+	targets[2].flags = 0;
+	targets[2].info = TARGET_XDS;
+
+	targets[3].target = "application/octet-stream";
+	targets[3].flags = 0;
+	targets[3].info = TARGET_RAW;
+
+	gtk_drag_dest_set(GTK_WIDGET(win), GTK_DEST_DEFAULT_DROP, targets, 4,
+			  GDK_ACTION_COPY | GDK_ACTION_ASK | GDK_ACTION_MOVE |
+			  GDK_ACTION_LINK | GDK_ACTION_PRIVATE);
+	gtk_drag_dest_add_image_targets(GTK_WIDGET(win));
+	gtk_drag_dest_add_text_targets(GTK_WIDGET(win));
+	gtk_drag_dest_add_uri_targets(GTK_WIDGET(win));
+
+	free(targets);
+#endif
+	gtk_widget_set_size_request(GTK_WIDGET(win), xscr->width, xscr->height);
+	geometry = g_strdup_printf("%dx%d+0+0", xscr->width, xscr->height);
 	gtk_window_parse_geometry(win, geometry);
 	g_free(geometry);
-
 	gtk_widget_add_events(GTK_WIDGET(win),
-			      GDK_BUTTON_PRESS_MASK |
-			      GDK_BUTTON_RELEASE_MASK |
-			      GDK_BUTTON1_MOTION_MASK |
-			      GDK_BUTTON2_MOTION_MASK | GDK_BUTTON3_MOTION_MASK);
+			      GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
+			      GDK_BUTTON1_MOTION_MASK | GDK_BUTTON2_MOTION_MASK |
+			      GDK_BUTTON3_MOTION_MASK);
 	gtk_widget_realize(GTK_WIDGET(win));
 	window = gtk_widget_get_window(GTK_WIDGET(win));
 	gdk_window_set_override_redirect(window, TRUE);
 	gdk_window_set_back_pixmap(window, NULL, TRUE);
 
 	g_signal_connect(G_OBJECT(win), "button_press_event", G_CALLBACK(button_press_event), xscr);
-	g_signal_connect(G_OBJECT(win), "button_release_event", G_CALLBACK(button_release_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "motion_notify_event", G_CALLBACK(motion_notify_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "expose_event", G_CALLBACK(expose_event), xscr);
+	g_signal_connect(G_OBJECT(win), "button_release_event", G_CALLBACK(button_release_event),
+			 xscr);
+#if 0
+	g_signal_connect(G_OBJECT(win), "motion_notify_event", G_CALLBACK(motion_notify_event),
+			 xscr);
+	g_signal_connect(G_OBJECT(win), "expose_event", G_CALLBACK(expose_event), xscr);
+#endif
 	g_signal_connect(G_OBJECT(win), "scroll_event", G_CALLBACK(scroll_event), xscr);
-
-//	g_signal_connect(G_OBJECT(win), "drag_drop", G_CALLBACK(drag_drop), xscr);
-//	g_signal_connect(G_OBJECT(win), "drag_data_received", G_CALLBACK(drag_data_received), xscr);
-//	g_signal_connect(G_OBJECT(win), "drag_motion", G_CALLBACK(drag_motion), xscr);
-//	g_signal_connect(G_OBJECT(win), "drag_leave", G_CALLBACK(drag_leave), xscr);
-
-//	g_signal_connect(G_OBJECT(win), "enter_notify_event", G_CALLBACK(enter_notify_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "focus_in_event", G_CALLBACK(focus_in_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "focus_out_event", G_CALLBACK(focus_out_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "grab_broken_event", G_CALLBACK(grab_broken_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "grab_focus", G_CALLBACK(grab_focus), xscr);
+#if 0
+	g_signal_connect(G_OBJECT(win), "drag_drop", G_CALLBACK(drag_drop), xscr);
+	g_signal_connect(G_OBJECT(win), "drag_data_received", G_CALLBACK(drag_data_received), xscr);
+	g_signal_connect(G_OBJECT(win), "drag_motion", G_CALLBACK(drag_motion), xscr);
+	g_signal_connect(G_OBJECT(win), "drag_leave", G_CALLBACK(drag_leave), xscr);
+#endif
+#if 0
+	g_signal_connect(G_OBJECT(win), "enter_notify_event", G_CALLBACK(enter_notify_event), xscr);
+	g_signal_connect(G_OBJECT(win), "focus_in_event", G_CALLBACK(focus_in_event), xscr);
+	g_signal_connect(G_OBJECT(win), "focus_out_event", G_CALLBACK(focus_out_event), xscr);
+	g_signal_connect(G_OBJECT(win), "grab_broken_event", G_CALLBACK(grab_broken_event), xscr);
+	g_signal_connect(G_OBJECT(win), "grab_focus", G_CALLBACK(grab_focus), xscr);
+#endif
 	g_signal_connect(G_OBJECT(win), "key_press_event", G_CALLBACK(key_press_event), xscr);
 	g_signal_connect(G_OBJECT(win), "key_release_event", G_CALLBACK(key_release_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "leave_notify_event", G_CALLBACK(leave_notify_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "map_event", G_CALLBACK(map_event), xscr);
-//	g_signal_connect(G_OBJECT(win), "realize", G_CALLBACK(widget_realize), xscr);
+#if 0
+	g_signal_connect(G_OBJECT(win), "leave_notify_event", G_CALLBACK(leave_notify_event), xscr);
+	g_signal_connect(G_OBJECT(win), "map_event", G_CALLBACK(map_event), xscr);
+	g_signal_connect(G_OBJECT(win), "realize", G_CALLBACK(widget_realize), xscr);
+#endif
 
-	GtkWidget *aln = gtk_alignment_new(0.5, 0.5, 1.0, 1.0);
-	gtk_container_set_border_width(GTK_CONTAINER(win), 0);;;;;
+	aln = gtk_alignment_new(0.5, 0.5, 1.0, 1.0);
+//	fix = gtk_fixed_new();
+//	gtk_widget_set_size_request(fix, xscr->width, xscr->height);
+
+	gtk_container_set_border_width(GTK_CONTAINER(win), 0);
+//	gtk_container_add(GTK_CONTAINER(win), fix);
 	gtk_container_add(GTK_CONTAINER(win), aln);
 
-	GtkTable *tab = GTK_TABLE(gtk_table_new(1, 1, TRUE));
+	tab = GTK_TABLE(gtk_table_new(1, 1, TRUE));
+
 	gtk_table_set_col_spacings(tab, 0);
 	gtk_table_set_row_spacings(tab, 0);
 	gtk_table_set_homogeneous(tab, TRUE);
 	gtk_widget_set_size_request(GTK_WIDGET(tab), ICON_WIDE, ICON_HIGH);
-//	gtk_widget_set_tooltip_text(GTK_WIDGET(tab), "Click Me!");
+//      gtk_widget_set_tooltip_text(GTK_WIDGET(tab), "Click Me!");
+//	gtk_fixed_put(GTK_FIXED(fix), tab, 0, 0);
 
 	gtk_container_add(GTK_CONTAINER(aln), GTK_WIDGET(tab));
 
 	update_root_pixmap(xscr, None);
 
 	gtk_widget_show(GTK_WIDGET(tab));
+//	gtk_widget_show(GTK_WIDGET(fix));
 	gtk_widget_show(GTK_WIDGET(aln));
 	gtk_widget_show(GTK_WIDGET(win));
 
 	gdk_window_lower(window);
 
-
-
+#if 0
 	(void) button_press_event;
 	(void) button_release_event;
+	(void) key_press_event;
+	(void) key_release_event;
+	(void) scroll_event;
+#endif
 	(void) enter_notify_event;
 	(void) focus_in_event;
 	(void) focus_out_event;
 	(void) grab_broken_event;
 	(void) grab_focus;
-	(void) key_press_event;
-	(void) key_release_event;
 	(void) leave_notify_event;
 	(void) map_event;
 	(void) widget_realize;
-	(void) scroll_event;
 }
 
 static void
@@ -2419,13 +2441,14 @@ update_root_pixmap(XdeScreen *xscr, Atom prop)
 	unsigned long nitems = 0, after = 0;
 	unsigned long *data = NULL;
 	Pixmap pmap = None;
+	XdeDesktop *desk = xscr->desk;
 
 	DPRINT();
 	if (prop == None || prop == _XA_ESETROOT_PMAP_ID) {
 		if (XGetWindowProperty
-				(dpy, root, _XA_ESETROOT_PMAP_ID, 0, 1, False, AnyPropertyType, &actual,
-				 &format, &nitems, &after, (unsigned char **)&data) == Success
-				&& format == 32 && actual && nitems >= 1 && data) {
+		    (dpy, root, _XA_ESETROOT_PMAP_ID, 0, 1, False, AnyPropertyType, &actual,
+		     &format, &nitems, &after, (unsigned char **) &data) == Success
+		    && format == 32 && actual && nitems >= 1 && data) {
 			pmap = data[0];
 		}
 		if (data) {
@@ -2435,9 +2458,9 @@ update_root_pixmap(XdeScreen *xscr, Atom prop)
 	}
 	if (prop == None || prop == _XA_XROOTPMAP_ID) {
 		if (XGetWindowProperty
-				(dpy, root, _XA_XROOTPMAP_ID, 0, 1, False, AnyPropertyType, &actual,
-				 &format, &nitems, &after, (unsigned char **)&data) == Success
-				&& format == 32 && actual && nitems >= 1 && data) {
+		    (dpy, root, _XA_XROOTPMAP_ID, 0, 1, False, AnyPropertyType, &actual,
+		     &format, &nitems, &after, (unsigned char **) &data) == Success
+		    && format == 32 && actual && nitems >= 1 && data) {
 			pmap = data[0];
 		}
 		if (data) {
@@ -2445,14 +2468,14 @@ update_root_pixmap(XdeScreen *xscr, Atom prop)
 			data = NULL;
 		}
 	}
-	if (pmap && xscr->pixmap != pmap) {
-		DPRINTF("root pixmap changed from 0x%08lx to 0x%08lx\n", xscr->pixmap, pmap);
-		xscr->pixmap = pmap;
+	if (pmap && desk->pixmap != pmap) {
+		DPRINTF("root pixmap changed from 0x%08lx to 0x%08lx\n", desk->pixmap, pmap);
+		desk->pixmap = pmap;
 		/* FIXME: do more */
 		/* Adjust the style of the desktop to use the pixmap specified by
-		   _XROOTPMAP_ID as the background.  Uses GTK+ 2.0 styles to do this.
-		   The root _XROOTPMAP_ID must be retrieved before calling this function
-		   for it to work correctly.  */
+		   _XROOTPMAP_ID as the background.  Uses GTK+ 2.0 styles to do this. The 
+		   root _XROOTPMAP_ID must be retrieved before calling this function for
+		   it to work correctly.  */
 	}
 }
 
@@ -2583,6 +2606,11 @@ init_wnck(XdeScreen *xscr)
 			G_CALLBACK(window_opened), xscr);
 	g_signal_connect(G_OBJECT(wnck), "window_stacking_changed",
 			G_CALLBACK(window_stacking_changed), xscr);
+
+#if 0
+	g_signal_connect(G_OBJECT(wnck), "showing_desktop_changed",
+			G_CALLBACK(showing_desktop_changed), xscr);
+#endif
 
 	wnck_screen_force_update(wnck);
 	window_manager_changed(wnck, xscr);
