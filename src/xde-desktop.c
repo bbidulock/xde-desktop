@@ -2519,9 +2519,53 @@ read_icons(void)
 	g_list_free_full(dirs, &xde_list_free);
 }
 
+GHashTable *MIME_ALIASES = NULL;
+
+/** @brief read mime aliases
+  *
+  * Initialization function that reads the XDG shared-mime specification
+  * compilant aliases from the files in %s/mime/aliases and places the aliases
+  * into a global hash MIME_ALIASES keyed by mime type.  This is lated used by
+  * get_icons() and read_mimeapps() to find icons and applications for various
+  * mime types.
+  *
+  * This method is idempotent and can be called at any time to update the
+  * hash.
+  */
 static void
 read_aliases(void)
 {
+	const gchar *const *sysdirs;
+	const gchar *usrdir;
+	GList *dirs = NULL, *dir;
+	char *b;
+
+	if (!MIME_ALIASES)
+		MIME_ALIASES = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
+	usrdir = g_get_user_data_dir();
+	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/aliases", usrdir));
+	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
+		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/aliases", *sysdirs));
+	b = calloc(BUFSIZ, sizeof(*b));
+	for (dir = dirs; dir; dir = dir->next) {
+		FILE *file;
+		char *p, *q;
+
+		if (!(file = fopen(dir->data, "r"))) {
+			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
+			continue;
+		}
+		while (fgets(b, BUFSIZ, file)) {
+			*strchrnul(b, '\n') = '\0';
+			if ((p = strtok(b, " \t")) && (q = strtok(NULL, " \t"))) {
+				g_hash_table_replace(MIME_ALIASES, strdup(p), strdup(q));
+				g_hash_table_replace(MIME_ALIASES, strdup(q), strdup(p));
+			}
+		}
+		fclose(file);
+	}
+	free(b);
+	g_list_free_full(dirs, &xde_list_free);
 }
 
 static void
