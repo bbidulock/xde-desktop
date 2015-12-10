@@ -2470,7 +2470,7 @@ static GdkFilterReturn root_handler(GdkXEvent *xevent, GdkEvent *event, gpointer
 static void update_layout(XdeScreen *xscr, Atom prop);
 static void update_theme(XdeScreen *xscr, Atom prop);
 
-GHashTable *MIME_GENERIC_ICONS = NULL;
+static GHashTable *MIME_GENERIC_ICONS = NULL;
 
 /** @brief read generic icons
   *
@@ -2519,7 +2519,13 @@ read_icons(void)
 	g_list_free_full(dirs, &xde_list_free);
 }
 
-GHashTable *MIME_ALIASES = NULL;
+static GHashTable *MIME_ALIASES = NULL;
+
+static void
+list_free(gpointer data)
+{
+	g_list_free_full(data, g_free);
+}
 
 /** @brief read mime aliases
   *
@@ -2541,7 +2547,7 @@ read_aliases(void)
 	char *b;
 
 	if (!MIME_ALIASES)
-		MIME_ALIASES = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
+		MIME_ALIASES = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
 	usrdir = g_get_user_data_dir();
 	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/aliases", usrdir));
 	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
@@ -2549,7 +2555,8 @@ read_aliases(void)
 	b = calloc(BUFSIZ, sizeof(*b));
 	for (dir = dirs; dir; dir = dir->next) {
 		FILE *file;
-		char *p, *q;
+		char *p, *q, *k;
+		GList *list;
 
 		if (!(file = fopen(dir->data, "r"))) {
 			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
@@ -2558,8 +2565,23 @@ read_aliases(void)
 		while (fgets(b, BUFSIZ, file)) {
 			*strchrnul(b, '\n') = '\0';
 			if ((p = strtok(b, " \t")) && (q = strtok(NULL, " \t"))) {
-				g_hash_table_replace(MIME_ALIASES, strdup(p), strdup(q));
-				g_hash_table_replace(MIME_ALIASES, strdup(q), strdup(p));
+				list = NULL;
+				if (g_hash_table_lookup_extended
+				    (MIME_ALIASES, p, (gpointer *) &k, (gpointer *) &list))
+					g_hash_table_steal(MIME_ALIASES, k);
+				else
+					k = strdup(p);
+				list = g_list_append(list, strdup(q));
+				g_hash_table_replace(MIME_ALIASES, k, list);
+
+				list = NULL;
+				if (g_hash_table_lookup_extended
+				    (MIME_ALIASES, q, (gpointer *) &k, (gpointer *) &list))
+					g_hash_table_steal(MIME_ALIASES, k);
+				else
+					k = strdup(q);
+				list = g_list_append(list, strdup(p));
+				g_hash_table_replace(MIME_ALIASES, k, list);
 			}
 		}
 		fclose(file);
@@ -2568,9 +2590,58 @@ read_aliases(void)
 	g_list_free_full(dirs, &xde_list_free);
 }
 
+static GHashTable *MIME_SUBCLASSES = NULL;
+
+/** @brief read mime subclasses
+  *
+  * Initialization function that reads the XDG share-mime specification
+  * compliant subclasses from the files in %s/mime/subclasses and places the
+  * subclasses into a global hash MIME_SUBCLASSES keyed by mime type.  This is
+  * later used by get_icons() and read_mimeapps() to find icons and
+  * applications for various mime types.
+  */
 static void
 read_subclasses(void)
 {
+	const gchar *const *sysdirs;
+	const gchar *usrdir;
+	GList *dirs = NULL, *dir;
+	char *b;
+
+	if (!MIME_SUBCLASSES)
+		MIME_SUBCLASSES =
+		    g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
+	usrdir = g_get_user_data_dir();
+	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/subclasses", usrdir));
+	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
+		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/subclasses", *sysdirs));
+	b = calloc(BUFSIZ, sizeof(*b));
+	for (dir = dirs; dir; dir = dir->next) {
+		FILE *file;
+		char *p, *q, *k;
+
+		if (!(file = fopen(dir->data, "r"))) {
+			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
+			continue;
+		}
+		while (fgets(b, BUFSIZ, file)) {
+			*strchrnul(b, '\n') = '\0';
+			if ((p = strtok(b, " \t")) && (q = strtok(NULL, " \t"))) {
+				GList *list = NULL;
+
+				if (g_hash_table_lookup_extended
+				    (MIME_SUBCLASSES, p, (gpointer *) &k, (gpointer *) &list))
+					g_hash_table_steal(MIME_SUBCLASSES, k);
+				else
+					k = strdup(p);
+				list = g_list_append(list, strdup(q));
+				g_hash_table_replace(MIME_SUBCLASSES, k, list);
+			}
+		}
+		fclose(file);
+	}
+	free(b);
+	g_list_free_full(dirs, &xde_list_free);
 }
 
 static void
