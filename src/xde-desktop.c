@@ -2644,6 +2644,15 @@ read_subclasses(void)
 	g_list_free_full(dirs, &xde_list_free);
 }
 
+/** @brief map applications to mime types
+  *
+  * gnome-vfs-2.0 has its own idea of the mapping of mime types to
+  * applications outside of the XDG desktop specificaiton.  This method uses
+  * the gnome-vfs application registry to retrieve those applications.  This
+  * provides a somewhat richer mapping verses using the XDG desktop
+  * specification applications files alone.  This method is used by
+  * read_mimeapps() to get a fuller set of mime type to application mappings.
+  */
 static void
 read_mimeapps(void)
 {
