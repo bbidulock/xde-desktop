@@ -2470,6 +2470,67 @@ static GdkFilterReturn root_handler(GdkXEvent *xevent, GdkEvent *event, gpointer
 static void update_layout(XdeScreen *xscr, Atom prop);
 static void update_theme(XdeScreen *xscr, Atom prop);
 
+GHashTable *MIME_GENERIC_ICONS = NULL;
+
+static void
+read_icons(void)
+{
+	const gchar *const *sysdirs;
+	const gchar *usrdir;
+	GList *dirs = NULL, *dir;
+	char *b;
+
+	MIME_GENERIC_ICONS = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
+	usrdir = g_get_user_data_dir();
+	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/generic-icons", usrdir));
+	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
+		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/generic-icons", *sysdirs));
+	b = calloc(BUFSIZ, sizeof(*b));
+	for (dir = dirs; dir; dir = dir->next) {
+		FILE *file;
+		char *p;
+
+		if (!(file = fopen(dir->data, "r"))) {
+			DPRINTF("%s: %s\n", (char *)dir->data, strerror(errno));
+			continue;
+		}
+		while (fgets(b, BUFSIZ, file)) {
+			*strchrnul(b, '\n') = '\0';
+			if ((p = strchr(b, ':'))) {
+				*p++ = '\0';
+				g_hash_table_replace(MIME_GENERIC_ICONS, strdup(b), strdup(p));
+			}
+		}
+		fclose(file);
+	}
+	free(b);
+	g_list_free_full(dirs, &xde_list_free);
+}
+
+static void
+read_aliases(void)
+{
+}
+
+static void
+read_subclasses(void)
+{
+}
+
+static void
+read_mimeapps(void)
+{
+}
+
+static void
+read_primary_data(void)
+{
+	read_icons();
+	read_aliases();
+	read_subclasses();
+	read_mimeapps();
+}
+
 static void
 do_run(int argc, char *argv[], Bool replace)
 {
@@ -2500,6 +2561,8 @@ do_run(int argc, char *argv[], Bool replace)
 
 	sel = gdk_x11_window_foreign_new_for_display(disp, selwin);
 	gdk_window_add_filter(sel, selwin_handler, screens);
+
+	read_primary_data();
 
 	for (s = 0, xscr = screens; s < nscr; s++, xscr++) {
 		snprintf(selection, sizeof(selection), XA_SELECTION_NAME, s);
