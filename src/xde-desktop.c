@@ -2472,6 +2472,16 @@ static void update_theme(XdeScreen *xscr, Atom prop);
 
 GHashTable *MIME_GENERIC_ICONS = NULL;
 
+/** @brief read generic icons
+  *
+  * Initialization function that reads the XDG shared-mime specification
+  * compliant generic icons from the files in %s/mime/generic-icons and places
+  * the icons into a global hash MIME_GENERIC_ICONS keyed by mime type.  This
+  * hash is later used by get_icons() to find icons for various mime types.
+  *
+  * This function is idempotent and can be called at any time to update the
+  * hash.
+  */
 static void
 read_icons(void)
 {
@@ -2480,7 +2490,9 @@ read_icons(void)
 	GList *dirs = NULL, *dir;
 	char *b;
 
-	MIME_GENERIC_ICONS = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
+	if (!MIME_GENERIC_ICONS)
+		MIME_GENERIC_ICONS =
+		    g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
 	usrdir = g_get_user_data_dir();
 	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/generic-icons", usrdir));
 	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
@@ -2491,7 +2503,7 @@ read_icons(void)
 		char *p;
 
 		if (!(file = fopen(dir->data, "r"))) {
-			DPRINTF("%s: %s\n", (char *)dir->data, strerror(errno));
+			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
 			continue;
 		}
 		while (fgets(b, BUFSIZ, file)) {
