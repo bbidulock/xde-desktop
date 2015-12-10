@@ -2476,6 +2476,7 @@ update_root_pixmap(XdeScreen *xscr, Atom prop)
 		   _XROOTPMAP_ID as the background.  Uses GTK+ 2.0 styles to do this. The 
 		   root _XROOTPMAP_ID must be retrieved before calling this function for
 		   it to work correctly.  */
+		set_style(xscr);
 	}
 }
 
