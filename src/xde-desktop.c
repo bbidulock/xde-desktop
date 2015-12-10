@@ -2164,6 +2164,85 @@ update_client_list(XdeScreen *xscr, Atom prop)
 }
 
 static void
+update_workarea(XdeScreen *xscr, Atom prop)
+{
+	Display *dpy = GDK_DISPLAY_XDISPLAY(xscr->disp);
+	Window root = RootWindow(dpy, xscr->index);
+	Atom actual = None;
+	int format = 0;
+	unsigned long nitems = 0, after = 0, *data = NULL, i, d;
+	long length;
+	Bool propok = False;
+	XdeDesktop *desk;
+	GdkRectangle workarea = { 0, };
+
+	DPRINT();
+
+	if (prop == None || prop == _XA_NET_WORKAREA) {
+		length = 4;
+	      net_again:
+		if (XGetWindowProperty
+		    (dpy, root, _XA_NET_WORKAREA, 0, length, False, XA_CARDINAL, &actual,
+		     &format, &nitems, &after, (unsigned char **) &data) == Success
+		    && format == 32 && actual && nitems >= 4 && data) {
+			if (after > 0 && length == 4) {
+				XFree(data);
+				data = NULL;
+				length += (after + 3) >> 2;
+				goto net_again;
+			}
+			for (i = 0, d = 0; d < (nitems >> 2); d++, i += 4) {
+				workarea.x = data[i + 0];
+				workarea.y = data[i + 1];
+				workarea.width = data[i + 2];
+				workarea.height = data[i + 3];
+			}
+		}
+		if (data) {
+			XFree(data);
+			data = NULL;
+		}
+		propok = True;
+	}
+	if (prop == None || prop == _XA_WIN_WORKAREA) {
+		length = 4;
+	      win_again:
+		if (XGetWindowProperty
+		    (dpy, root, _XA_WIN_WORKAREA, 0, length, False, XA_CARDINAL, &actual,
+		     &format, &nitems, &after, (unsigned char **) &data) == Success
+		    && format == 32 && actual && nitems >= 4 && data) {
+			if (after > 0 && length == 4) {
+				XFree(data);
+				data = NULL;
+				length += (after + 3) >> 2;
+				goto win_again;
+			}
+			workarea.x = data[0];
+			workarea.y = data[1];
+			workarea.width = data[2] - workarea.x;
+			workarea.height = data[3] - workarea.y;
+			desk = xscr->desk;
+			if (desk->workarea.x != workarea.x ||
+			    desk->workarea.y != workarea.y ||
+			    desk->workarea.width != workarea.width ||
+			    desk->workarea.height != workarea.height) {
+				desk->workarea.x = workarea.x;
+				desk->workarea.y = workarea.y;
+				desk->workarea.width = workarea.width;
+				desk->workarea.height = workarea.height;
+			}
+		}
+		if (data) {
+			XFree(data);
+			data = NULL;
+		}
+		propok = True;
+	}
+	if (!propok)
+		EPRINTF("wrong property passed\n");
+}
+
+static void
 update_window(XdeScreen *xscr, Atom prop)
 {
 }
@@ -2719,28 +2798,6 @@ update_layout(XdeScreen *xscr, Atom prop)
 	refresh_layout(xscr); /* XXX: should be deferred */
 }
 
-#if 0
-static void
-update_workarea(XdeScreen *xscr, Atom prop)
-{
-	Display *dpy = GDK_DISPLAY_XDISPLAY(xscr->disp);
-	Window root = RootWindow(dpy, xscr->index);
-	Atom actual = None;
-	int format = 0, num;
-	unsigned long nitems = 0, after = 0, *data = NULL;
-	Bool propok = False;
-
-	DPRINT();
-
-	if (prop == None || prop == _XA_NET_WORKAREA) {
-	}
-	if (prop == None || prop == _XA_WIN_WORKAREA) {
-	}
-	if (!propok)
-		EPRINTF("wrong property passed\n");
-}
-#endif
-
 static GdkFilterReturn
 event_handler_PropertyNotify(Display *dpy, XEvent *xev, XdeScreen *xscr)
 {
@@ -2822,7 +2879,18 @@ event_handler_PropertyNotify(Display *dpy, XEvent *xev, XdeScreen *xscr)
 		&& xev->xproperty.state == PropertyNewValue) {
 		DPRINT();
 		update_client_list(xscr, xev->xproperty.atom);
+	} else
+	    if (xev->xproperty.atom == _XA_NET_WORKAREA
+		&& xev->xproperty.state == PropertyNewValue) {
+		DPRINT();
+		update_workarea(xscr, xev->xproperty.atom);
+	} else
+	    if (xev->xproperty.atom == _XA_WIN_WORKAREA
+		&& xev->xproperty.state == PropertyNewValue) {
+		DPRINT();
+		update_workarea(xscr, xev->xproperty.atom);
 	}
+
 	return GDK_FILTER_CONTINUE;	/* event not handled */
 }
 
