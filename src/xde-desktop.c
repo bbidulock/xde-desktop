@@ -2090,7 +2090,7 @@ init_window(XdeScreen *xscr)
 	GdkWindow *window;
 	char *geometry;
 	GtkWidget *aln;
-	GtkTable *tab;
+	GtkWidget *tab;
 
 #if 0
 	GtkTargetEntry *targets;
@@ -2214,22 +2214,22 @@ init_window(XdeScreen *xscr)
 //	gtk_container_add(GTK_CONTAINER(win), fix);
 	gtk_container_add(GTK_CONTAINER(win), aln);
 
-	tab = GTK_TABLE(gtk_table_new(1, 1, TRUE));
+	xscr->table = tab = gtk_table_new(1, 1, TRUE);
 
-	gtk_table_set_col_spacings(tab, 0);
-	gtk_table_set_row_spacings(tab, 0);
-	gtk_table_set_homogeneous(tab, TRUE);
-	gtk_widget_set_size_request(GTK_WIDGET(tab), ICON_WIDE, ICON_HIGH);
-//      gtk_widget_set_tooltip_text(GTK_WIDGET(tab), "Click Me!");
+	gtk_table_set_col_spacings(GTK_TABLE(tab), 0);
+	gtk_table_set_row_spacings(GTK_TABLE(tab), 0);
+	gtk_table_set_homogeneous(GTK_TABLE(tab), TRUE);
+	gtk_widget_set_size_request(tab, ICON_WIDE, ICON_HIGH);
+//      gtk_widget_set_tooltip_text(tab, "Click Me!");
 //	gtk_fixed_put(GTK_FIXED(fix), tab, 0, 0);
 
-	gtk_container_add(GTK_CONTAINER(aln), GTK_WIDGET(tab));
+	gtk_container_add(GTK_CONTAINER(aln), tab);
 
 	update_root_pixmap(xscr, None);
 
-	gtk_widget_show(GTK_WIDGET(tab));
-//	gtk_widget_show(GTK_WIDGET(fix));
-	gtk_widget_show(GTK_WIDGET(aln));
+	gtk_widget_show(tab);
+//	gtk_widget_show(fix);
+	gtk_widget_show(aln);
 	gtk_widget_show(GTK_WIDGET(win));
 
 	gdk_window_lower(window);
