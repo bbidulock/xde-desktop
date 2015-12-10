@@ -104,6 +104,8 @@
 #define WNCK_I_KNOW_THIS_IS_UNSTABLE
 #include <libwnck/libwnck.h>
 
+#include <libgnomevfs/gnome-vfs.h>
+
 #include <pwd.h>
 
 #ifdef _GNU_SOURCE
@@ -3822,6 +3824,8 @@ startup(int argc, char *argv[])
 	init_smclient();
 
 	gtk_init(&argc, &argv);
+
+	gnome_vfs_init();
 
 	disp = gdk_display_get_default();
 	nscr = gdk_display_get_n_screens(disp);
