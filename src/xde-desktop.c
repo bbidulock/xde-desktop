@@ -2644,7 +2644,70 @@ read_subclasses(void)
 	g_list_free_full(dirs, &xde_list_free);
 }
 
-/** @brief map applications to mime types
+/** @brief get icon names for a content type
+  *
+  * Given a mime type, returns a list of icon names, or NULL when
+  * unsuccessful.  The icon names are in order of preference, starting with
+  * the mime type supplied, any aliases of that mime type, and any subclasses
+  * of that mime type.  The purpose of this method is to always find a
+  * reasonable icon representation of the mime type.  Use when displaying an
+  * icon for a given desktop object.
+  */
+GList *
+get_icons(const char *mime)
+{
+	GList *icons = NULL, *aliases, *mimes = NULL, *list, *classes;
+
+	if (!mime)
+		return (icons);
+	mimes = g_list_append(mimes, g_strdup(mime));
+	aliases = g_hash_table_lookup(MIME_ALIASES, mime);
+	for (list = aliases; list; list = list->next)
+		mimes = g_list_append(mimes, g_strdup(list->data));
+	classes = g_hash_table_lookup(MIME_SUBCLASSES, mime);
+	for (list = classes; list; list = list->next)
+		mimes = g_list_append(mimes, g_strdup(list->data));
+	for (list = mimes; list; list = list->next) {
+		char *p, *icon1, *icon2, *icon3;
+
+		p = icon1 = g_strdup(list->data);
+		while ((p = strchr(p, '/')))
+			*p = '-';
+		icons = g_list_append(icons, g_strdup_printf("gnome-mime-%s", icon1));
+		g_free(icon1);
+		if ((icon3 = g_hash_table_lookup(MIME_GENERIC_ICONS, list->data)))
+			icons = g_list_append(icons, g_strdup(icon3));
+		icon2 = g_strdup(list->data);
+		*strchrnul(icon2, '/') = '\0';
+		icons = g_list_append(icons, g_strdup_printf("gnome-mime-%s", icon2));
+		g_free(icon2);
+	}
+	return (icons);
+}
+
+/** @brief gio version of get_icons
+  */
+GList *
+get_icons2(const char *mime)
+{
+	GList *icons = NULL;
+	GIcon *icon;
+	char *name, *type;
+
+	if (!(type = g_content_type_from_mime_type(mime)))
+		return (icons);
+	if ((icon = g_content_type_get_icon(type))) {
+		if ((name = g_icon_to_string(icon)))
+			icons = g_list_append(icons, name);
+		g_object_unref(icon);
+	}
+	if ((name = g_content_type_get_generic_icon_name(type)))
+		icons = g_list_append(icons, name);
+	g_free(type);
+	return (icons);
+}
+
+/** @brief map gvfs applications to mime types
   *
   * gnome-vfs-2.0 has its own idea of the mapping of mime types to
   * applications outside of the XDG desktop specificaiton.  This method uses
@@ -2653,9 +2716,42 @@ read_subclasses(void)
   * specification applications files alone.  This method is used by
   * read_mimeapps() to get a fuller set of mime type to application mappings.
   */
+GList *
+read_gvfsapps(void)
+{
+	GList *apps = NULL;
+
+	return (apps);
+}
+
+GHashTable *MIME_APPLICATIONS = NULL;
+
+/** @brief map applications to mime types
+  *
+  * Initialization function that uses read_gvfsapps() and get_applications()
+  * to get all of the applications known to gnome-vfs-2.0 and those specified
+  * according to the XDG desktop specification.  These applicaitons are placed
+  * into the global hash MIME_APPLICATIONS keyed by application id.  This is
+  * later used by get_apps_and_subs() to retrieve applications and subclass
+  * applications associated with a mime type.
+  *
+  * This method is idempotent and can be called at any time to update the
+  * hash.
+  */
 static void
 read_mimeapps(void)
 {
+#if 0
+	GList *gvfs_list, *apps_list, *list, *item;
+
+	if (!MIME_APPLICATIONS)
+		MIME_APPLICATIONS = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
+	gvfs_list = read_gvfsapps();
+	apps_list = get_applications();
+	list = g_list_concat(gvfs_list, apps_list);
+	for (item = list; item; item = item->next) {
+	}
+#endif
 }
 
 static void
