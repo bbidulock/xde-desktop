@@ -298,7 +298,7 @@ typedef struct XdeScreen XdeScreen;
 
 typedef struct {
 	XdeScreen *xscr;
-	Pixmap pixmap;			/* current pixmap for this desktop */
+	XdePixmap *pixmap;		/* current pixmap for this desktop */
 	int index;
 	int rows;			/* number of rows in table */
 	int cols;			/* number of cols in table */
@@ -415,7 +415,15 @@ get_pixmap(XdeScreen *xscr, Pixmap pmap)
 static void
 set_style(XdeScreen *xscr)
 {
-	/* FIXME */
+	GtkStyle *style;
+	GdkPixmap *pixmap = xscr->desk->pixmap->pixmap;
+
+	style = gtk_style_copy(gtk_widget_get_default_style());
+	g_object_ref(pixmap);	/* ??? */
+	style->bg_pixmap[GTK_STATE_NORMAL] = pixmap;
+	g_object_ref(pixmap);	/* ??? */
+	style->bg_pixmap[GTK_STATE_PRELIGHT] = pixmap;
+	gtk_widget_set_style(GTK_WIDGET(xscr->desktop), style);
 }
 
 void update_desktop(XdeDesktop *desk);
@@ -1716,14 +1724,11 @@ update_root_pixmap(XdeScreen *xscr, Atom prop)
 			data = NULL;
 		}
 	}
-	if (pmap && desk->pixmap != pmap) {
-		DPRINTF("root pixmap changed from 0x%08lx to 0x%08lx\n", desk->pixmap, pmap);
-		desk->pixmap = pmap;
-		/* FIXME: do more */
-		/* Adjust the style of the desktop to use the pixmap specified by
-		   _XROOTPMAP_ID as the background.  Uses GTK+ 2.0 styles to do this. The 
-		   root _XROOTPMAP_ID must be retrieved before calling this function for
-		   it to work correctly.  */
+	if (pmap && (!desk->pixmap || desk->pixmap->pmap != pmap)) {
+		if (desk->pixmap)
+			xde_pixmap_unref(xscr, &desk->pixmap);
+		if (pmap)
+			xde_pixmap_ref((desk->pixmap = get_pixmap(xscr, pmap)));
 		set_style(xscr);
 	}
 }
