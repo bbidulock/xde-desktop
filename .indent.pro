@@ -306,8 +306,10 @@
 -TWnckWorkspace
 -Twnode_t
 -TXClientMessageEvent
+-TXdeDesktop
 -TXdeIcon
 -TXdeMonitor
+-TXdePixmap
 -TXdeScreen
 -TXdgContext
 -TXdgDirectory

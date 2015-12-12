@@ -263,22 +263,11 @@ Options options = {
 	.saveFile = NULL,
 };
 
-typedef struct _XdePixmap {
-	int refs;			/* number of references */
-	int index;			/* background image index */
-	struct _XdePixmap *next;	/* next pixmap in list */
-	struct _XdePixmap **pprev;	/* previous next pointer in list */
-	GdkPixmap *pixmap;		/* pixmap for background image */
-	GdkRectangle geom;		/* pixmap geometry */
-} XdePixmap;
-
 typedef struct {
 	int refs;			/* number of references */
-	int index;			/* background image index */
-	char *file;			/* filename of image source */
-	GdkPixbuf *pixbuf;		/* pixbuf for this image */
-	XdePixmap *pixmaps;		/* list of pixmaps at various geometries */
-} XdeImage;
+	Pixmap pmap;			/* original pixmap */
+	GdkPixmap *pixmap;		/* copy of original pixmap */
+} XdePixmap;
 
 typedef struct {
 	int index;			/* monitor number */
@@ -343,7 +332,6 @@ struct XdeScreen {
 	char *theme;			/* XDE theme name */
 	GKeyFile *entry;		/* XDE theme file entry */
 	int nimg;			/* number of images */
-	XdeImage **sources;		/* the images for the theme */
 	Window selwin;			/* selection owner window */
 	Atom atom;			/* selection atom for this screen */
 	Window laywin;			/* desktop layout selection owner */
@@ -353,8 +341,6 @@ struct XdeScreen {
 	int rows;			/* number of rows in layout */
 	int cols;			/* number of cols in layout */
 	int desks;			/* number of desks in layout */
-	int ndsk;			/* number of desktops */
-	XdeImage **backdrops;		/* the desktops */
 	int current;			/* current desktop for this screen */
 	char *wmname;			/* window manager name (adjusted) */
 	Bool goodwm;			/* is the window manager usable? */
@@ -370,6 +356,7 @@ struct XdeScreen {
 	GtkWidget *table;
 	GPtrArray *desktops;		/* array of pointers to XdeDesktops */
 	XdeDesktop *desk;		/* current desktop */
+	XContext pixmaps;		/* pixmap hash */
 };
 
 XdeScreen *screens;			/* array of screens */
@@ -387,6 +374,37 @@ static GHashTable *MIME_SUBCLASSES = NULL;
 static GHashTable *MIME_APPLICATIONS = NULL;
 static GHashTable *XDG_DESKTOPS = NULL;
 static GHashTable *XDG_CATEGORIES = NULL;
+
+XdePixmap *
+get_pixmap(XdeScreen *xscr, Pixmap pmap)
+{
+	XdePixmap *pixmap = NULL;
+	Display *dpy;
+
+	dpy = GDK_DISPLAY_XDISPLAY(xscr->disp);
+	if (XFindContext(dpy, pmap, xscr->pixmaps, (XPointer *) &pixmap) == Success) {
+		GdkPixmap *orig;
+		GdkColormap *cmap;
+		gint w, h, d;
+		cairo_t *cr;
+
+		orig = gdk_pixmap_foreign_new_for_display(xscr->disp, pmap);
+		cmap = gdk_screen_get_default_colormap(xscr->scrn);
+		gdk_drawable_set_colormap(orig, cmap);
+		gdk_pixmap_get_size(orig, &w, &h);
+		d = gdk_drawable_get_depth(orig);
+		pixmap = calloc(1, sizeof(*pixmap));
+		pixmap->pmap = pmap;
+		pixmap->pixmap = gdk_pixmap_new(xscr->root, w, h, d);
+		cr = gdk_cairo_create(pixmap->pixmap);
+		gdk_cairo_set_source_pixmap(cr, orig, 0, 0);
+		cairo_paint(cr);
+		cairo_destroy(cr);
+		g_object_unref(orig);
+		XSaveContext(dpy, pmap, xscr->pixmaps, (XPointer) pixmap);
+	}
+	return (pixmap);
+}
 
 /** @brief set desktop style
   *
@@ -860,59 +878,26 @@ xde_pixmap_ref(XdePixmap *pixmap)
 }
 
 void
-xde_pixmap_delete(XdePixmap *pixmap)
+xde_pixmap_delete(XdeScreen *xscr, XdePixmap *pixmap)
 {
 	if (pixmap) {
-		if (pixmap->pprev) {
-			if ((*(pixmap->pprev) = pixmap->next))
-				pixmap->next->pprev = pixmap->pprev;
-		}
+		if (pixmap->pmap)
+			XDeleteContext(GDK_DISPLAY_XDISPLAY(xscr->disp), pixmap->pmap,
+				       xscr->pixmaps);
+		if (pixmap->pixmap)
+			g_object_unref(pixmap->pixmap);
 		free(pixmap);
 	}
 }
 
 void
-xde_pixmap_unref(XdePixmap ** pixmapp)
+xde_pixmap_unref(XdeScreen *xscr, XdePixmap **pixmapp)
 {
 	if (pixmapp && *pixmapp) {
 		if (--(*pixmapp)->refs <= 0) {
-			xde_pixmap_delete(*pixmapp);
+			xde_pixmap_delete(xscr, *pixmapp);
 			*pixmapp = NULL;
 		}
-	}
-}
-
-void
-xde_image_ref(XdeImage *image)
-{
-	if (image)
-		image->refs++;
-}
-
-void
-xde_image_delete(XdeImage *image)
-{
-	XdePixmap *pixmap;
-
-	while ((pixmap = image->pixmaps))
-		xde_pixmap_delete(pixmap);
-	if (image->file)
-		free(image->file);
-	if (image->pixbuf)
-		g_object_unref(image->pixbuf);
-	free(image);
-}
-
-void
-xde_image_unref(XdeImage **imagep)
-{
-	if (imagep && *imagep) {
-		(*imagep)->refs -= 1;
-		if ((*imagep)->refs <= 0) {
-			xde_image_delete(*imagep);
-			*imagep = NULL;
-		} else
-			DPRINTF("There are %d refs left for %p\n", (*imagep)->refs, *imagep);
 	}
 }
 
@@ -2634,6 +2619,7 @@ do_run(int argc, char *argv[], Bool replace)
 		xscr->width = gdk_screen_get_width(xscr->scrn);
 		xscr->height = gdk_screen_get_height(xscr->scrn);
 		xscr->desktops = g_ptr_array_new_full(64, &free_desktop);
+		xscr->pixmaps = XUniqueContext();
 		gdk_window_add_filter(xscr->root, root_handler, xscr);
 		init_wnck(xscr);
 		init_monitors(xscr);
