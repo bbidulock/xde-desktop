@@ -2877,6 +2877,36 @@ get_apps_and_subs_gio(const char *mime, GList **apps_p, GList **subs_p)
 }
 
 static void
+get_keys(gpointer key, gpointer value, gpointer user_data)
+{
+	GList **list_p = user_data;
+
+	*list_p = g_list_append(*list_p, strdup(key));
+}
+
+static gint
+string_compare(gconstpointer a, gconstpointer b)
+{
+	return g_strcmp0(a, b);
+}
+
+/** @brief get list of used desktops
+  *
+  * Returns a list of the desktops that appeared in the "OnlyShowIn" and
+  * "NotShowIn" key fields of XDG desktop application files.  This will be
+  * used to present the user a choice when adding custom applications.
+  */
+GList *
+get_desktops(void)
+{
+	GList *desktops = NULL;
+
+	g_hash_table_foreach(XDG_DESKTOPS, &get_keys, &desktops);
+	desktops = g_list_sort(desktops, &string_compare);
+	return (desktops);
+}
+
+static void
 do_run(int argc, char *argv[], Bool replace)
 {
 	GdkDisplay *disp = gdk_display_get_default();
