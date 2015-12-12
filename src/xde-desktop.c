@@ -467,7 +467,7 @@ xde_desktop_read_desktop(XdeDesktop *desk)
 		while ((d = readdir(dir))) {
 			char *name;
 
-			if (!strcmp(d->d_name, ".") && !strcmp(d->d_name, ".."))
+			if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 				continue;
 			/* TODO: provide option for hidden files. */
 			if (*d->d_name == '.')
@@ -2758,6 +2758,46 @@ static void
 list_free(gpointer data)
 {
 	g_list_free_full(data, g_free);
+}
+
+void
+_get_dir_apps(const char *dir, const char *path, const char *pref, GHashTable *apps)
+{
+	DIR *dh;
+	char *dirname;
+
+	dirname = g_strdup_printf("%s/%s", dir, path);
+	if ((dh = opendir(dirname))) {
+		struct dirent *d;
+
+		while ((d = readdir(dh))) {
+			char *name, *apid;
+
+			if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+				continue;
+			/* TODO: provide option for hidden files. */
+			if (*d->d_name == '.')
+				continue;
+			name =
+			    path ? g_strdup_printf("%s/%s", path, d->d_name) : g_strdup(d->d_name);
+			apid =
+			    pref ? g_strdup_printf("%s-%s", pref, d->d_name) : g_strdup(d->d_name);
+			if (d->d_type == DT_DIR) {
+				_get_dir_apps(dir, name, apid, apps);
+				g_free(apid);
+			} else if (d->d_type == DT_LNK || d->d_type == DT_REG) {
+				GDesktopAppInfo *info;
+
+				if ((info = g_desktop_app_info_new_from_filename(name)))
+					g_hash_table_replace(apps, apid, info);
+				else
+					g_free(apid);
+			}
+			g_free(name);
+		}
+		closedir(dh);
+	}
+	g_free(dirname);
 }
 
 /** @brief get hash of default applications, added and removed associations.
