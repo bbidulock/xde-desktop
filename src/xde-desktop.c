@@ -95,6 +95,7 @@
 #endif
 #include <X11/SM/SMlib.h>
 #include <gio/gio.h>
+#include <gio/gdesktopappinfo.h>
 #include <glib.h>
 #include <gdk/gdkx.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -2661,7 +2662,9 @@ read_gvfsapps(void)
 	return (apps);
 }
 
-GHashTable *MIME_APPLICATIONS = NULL;
+static GHashTable *MIME_APPLICATIONS = NULL;
+static GHashTable *XDG_DESKTOPS = NULL;
+static GHashTable *XDG_CATEGORIES = NULL;
 
 /** @brief map applications to mime types
   *
@@ -2689,6 +2692,63 @@ read_mimeapps(void)
 	for (item = list; item; item = item->next) {
 	}
 #endif
+}
+
+static gboolean
+add_application(gpointer key, gpointer value, gpointer user_data)
+{
+	GDesktopAppInfo *app = user_data;
+	GList *list = NULL;
+	char *k;
+
+	if ((g_hash_table_lookup_extended
+	     (MIME_APPLICATIONS, key, (gpointer *) &k, (gpointer *) &list)))
+		g_hash_table_steal(MIME_APPLICATIONS, k);
+	else
+		k = strdup(key);
+	list = g_list_append(list, app);
+	g_hash_table_replace(MIME_APPLICATIONS, k, list);
+	return TRUE;
+}
+
+/** @brief a gio version of read_mimeapps()
+  */
+void
+read_mimeapps_gio(void)
+{
+	GList *list, *apps;
+
+	for (list = apps = g_app_info_get_all(); list; list = list->next) {
+		GDesktopAppInfo *app = list->data;
+		char *value, *p, *token;
+		GHashTable *types;
+		GList *alias;
+
+		for (p = value = g_desktop_app_info_get_string(app, "OnlyShowIn");
+		     (token = strtok(p, ";")); p = NULL)
+			g_hash_table_add(XDG_DESKTOPS, strdup(token));
+		g_free(value);
+		for (p = value = g_desktop_app_info_get_string(app, "NotShowIn");
+		     (token = strtok(p, ";")); p = NULL)
+			g_hash_table_add(XDG_DESKTOPS, strdup(token));
+		g_free(value);
+		for (p = value = g_desktop_app_info_get_string(app, "Categories");
+		     (token = strtok(p, ";")); p = NULL)
+			g_hash_table_add(XDG_CATEGORIES, strdup(token));
+		g_free(value);
+		types = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, NULL);
+		for (p = value = g_desktop_app_info_get_string(app, "MimeType");
+		     (token = strtok(p, ";")); p = NULL) {
+			g_hash_table_add(types, strdup(token));
+			for (alias = g_hash_table_lookup(MIME_ALIASES, token); alias;
+			     alias = alias->next)
+				g_hash_table_add(types, strdup(alias->data));
+		}
+		g_free(value);
+		g_hash_table_foreach_remove(types, &add_application, app);
+		g_hash_table_destroy(types);
+	}
+	g_list_free(apps);
 }
 
 static void
