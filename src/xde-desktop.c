@@ -390,6 +390,13 @@ typedef enum  {
 	TARGET_RAW = 4,
 } TargetType;
 
+static GHashTable *MIME_GENERIC_ICONS = NULL;
+static GHashTable *MIME_ALIASES = NULL;
+static GHashTable *MIME_SUBCLASSES = NULL;
+static GHashTable *MIME_APPLICATIONS = NULL;
+static GHashTable *XDG_DESKTOPS = NULL;
+static GHashTable *XDG_CATEGORIES = NULL;
+
 /** @brief set desktop style
   *
   * Adjusts the style of the desktop window to use the pixmap specified by
@@ -2471,295 +2478,6 @@ static GdkFilterReturn root_handler(GdkXEvent *xevent, GdkEvent *event, gpointer
 static void update_layout(XdeScreen *xscr, Atom prop);
 static void update_theme(XdeScreen *xscr, Atom prop);
 
-static GHashTable *MIME_GENERIC_ICONS = NULL;
-
-/** @brief read generic icons
-  *
-  * Initialization function that reads the XDG shared-mime specification
-  * compliant generic icons from the files in %s/mime/generic-icons and places
-  * the icons into a global hash MIME_GENERIC_ICONS keyed by mime type.  This
-  * hash is later used by get_icons() to find icons for various mime types.
-  *
-  * This function is idempotent and can be called at any time to update the
-  * hash.
-  */
-static void
-read_icons(void)
-{
-	const gchar *const *sysdirs;
-	const gchar *usrdir;
-	GList *dirs = NULL, *dir;
-	char *b;
-
-	if (!MIME_GENERIC_ICONS)
-		MIME_GENERIC_ICONS =
-		    g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
-	usrdir = g_get_user_data_dir();
-	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/generic-icons", usrdir));
-	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
-		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/generic-icons", *sysdirs));
-	b = calloc(BUFSIZ, sizeof(*b));
-	for (dir = dirs; dir; dir = dir->next) {
-		FILE *file;
-		char *p;
-
-		if (!(file = fopen(dir->data, "r"))) {
-			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
-			continue;
-		}
-		while (fgets(b, BUFSIZ, file)) {
-			*strchrnul(b, '\n') = '\0';
-			if ((p = strchr(b, ':'))) {
-				*p++ = '\0';
-				g_hash_table_replace(MIME_GENERIC_ICONS, strdup(b), strdup(p));
-			}
-		}
-		fclose(file);
-	}
-	free(b);
-	g_list_free_full(dirs, &xde_list_free);
-}
-
-static GHashTable *MIME_ALIASES = NULL;
-
-static void
-list_free(gpointer data)
-{
-	g_list_free_full(data, g_free);
-}
-
-/** @brief read mime aliases
-  *
-  * Initialization function that reads the XDG shared-mime specification
-  * compilant aliases from the files in %s/mime/aliases and places the aliases
-  * into a global hash MIME_ALIASES keyed by mime type.  This is lated used by
-  * get_icons() and read_mimeapps() to find icons and applications for various
-  * mime types.
-  *
-  * This method is idempotent and can be called at any time to update the
-  * hash.
-  */
-static void
-read_aliases(void)
-{
-	const gchar *const *sysdirs;
-	const gchar *usrdir;
-	GList *dirs = NULL, *dir;
-	char *b;
-
-	if (!MIME_ALIASES)
-		MIME_ALIASES = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
-	usrdir = g_get_user_data_dir();
-	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/aliases", usrdir));
-	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
-		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/aliases", *sysdirs));
-	b = calloc(BUFSIZ, sizeof(*b));
-	for (dir = dirs; dir; dir = dir->next) {
-		FILE *file;
-		char *p, *q, *k;
-		GList *list;
-
-		if (!(file = fopen(dir->data, "r"))) {
-			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
-			continue;
-		}
-		while (fgets(b, BUFSIZ, file)) {
-			*strchrnul(b, '\n') = '\0';
-			if ((p = strtok(b, " \t")) && (q = strtok(NULL, " \t"))) {
-				list = NULL;
-				if (g_hash_table_lookup_extended
-				    (MIME_ALIASES, p, (gpointer *) &k, (gpointer *) &list))
-					g_hash_table_steal(MIME_ALIASES, k);
-				else
-					k = strdup(p);
-				list = g_list_append(list, strdup(q));
-				g_hash_table_replace(MIME_ALIASES, k, list);
-
-				list = NULL;
-				if (g_hash_table_lookup_extended
-				    (MIME_ALIASES, q, (gpointer *) &k, (gpointer *) &list))
-					g_hash_table_steal(MIME_ALIASES, k);
-				else
-					k = strdup(q);
-				list = g_list_append(list, strdup(p));
-				g_hash_table_replace(MIME_ALIASES, k, list);
-			}
-		}
-		fclose(file);
-	}
-	free(b);
-	g_list_free_full(dirs, &xde_list_free);
-}
-
-static GHashTable *MIME_SUBCLASSES = NULL;
-
-/** @brief read mime subclasses
-  *
-  * Initialization function that reads the XDG share-mime specification
-  * compliant subclasses from the files in %s/mime/subclasses and places the
-  * subclasses into a global hash MIME_SUBCLASSES keyed by mime type.  This is
-  * later used by get_icons() and read_mimeapps() to find icons and
-  * applications for various mime types.
-  */
-static void
-read_subclasses(void)
-{
-	const gchar *const *sysdirs;
-	const gchar *usrdir;
-	GList *dirs = NULL, *dir;
-	char *b;
-
-	if (!MIME_SUBCLASSES)
-		MIME_SUBCLASSES =
-		    g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
-	usrdir = g_get_user_data_dir();
-	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/subclasses", usrdir));
-	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
-		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/subclasses", *sysdirs));
-	b = calloc(BUFSIZ, sizeof(*b));
-	for (dir = dirs; dir; dir = dir->next) {
-		FILE *file;
-		char *p, *q, *k;
-
-		if (!(file = fopen(dir->data, "r"))) {
-			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
-			continue;
-		}
-		while (fgets(b, BUFSIZ, file)) {
-			*strchrnul(b, '\n') = '\0';
-			if ((p = strtok(b, " \t")) && (q = strtok(NULL, " \t"))) {
-				GList *list = NULL;
-
-				if (g_hash_table_lookup_extended
-				    (MIME_SUBCLASSES, p, (gpointer *) &k, (gpointer *) &list))
-					g_hash_table_steal(MIME_SUBCLASSES, k);
-				else
-					k = strdup(p);
-				list = g_list_append(list, strdup(q));
-				g_hash_table_replace(MIME_SUBCLASSES, k, list);
-			}
-		}
-		fclose(file);
-	}
-	free(b);
-	g_list_free_full(dirs, &xde_list_free);
-}
-
-/** @brief map gvfs applications to mime types
-  *
-  * gnome-vfs-2.0 has its own idea of the mapping of mime types to
-  * applications outside of the XDG desktop specificaiton.  This method uses
-  * the gnome-vfs application registry to retrieve those applications.  This
-  * provides a somewhat richer mapping verses using the XDG desktop
-  * specification applications files alone.  This method is used by
-  * read_mimeapps() to get a fuller set of mime type to application mappings.
-  */
-GList *
-read_gvfsapps(void)
-{
-	GList *apps = NULL;
-
-	return (apps);
-}
-
-static GHashTable *MIME_APPLICATIONS = NULL;
-static GHashTable *XDG_DESKTOPS = NULL;
-static GHashTable *XDG_CATEGORIES = NULL;
-
-/** @brief map applications to mime types
-  *
-  * Initialization function that uses read_gvfsapps() and get_applications()
-  * to get all of the applications known to gnome-vfs-2.0 and those specified
-  * according to the XDG desktop specification.  These applicaitons are placed
-  * into the global hash MIME_APPLICATIONS keyed by application id.  This is
-  * later used by get_apps_and_subs() to retrieve applications and subclass
-  * applications associated with a mime type.
-  *
-  * This method is idempotent and can be called at any time to update the
-  * hash.
-  */
-static void
-read_mimeapps(void)
-{
-#if 0
-	GList *gvfs_list, *apps_list, *list, *item;
-
-	if (!MIME_APPLICATIONS)
-		MIME_APPLICATIONS = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
-	gvfs_list = read_gvfsapps();
-	apps_list = get_applications();
-	list = g_list_concat(gvfs_list, apps_list);
-	for (item = list; item; item = item->next) {
-	}
-#endif
-}
-
-static gboolean
-add_application(gpointer key, gpointer value, gpointer user_data)
-{
-	GDesktopAppInfo *app = user_data;
-	GList *list = NULL;
-	char *k;
-
-	if ((g_hash_table_lookup_extended
-	     (MIME_APPLICATIONS, key, (gpointer *) &k, (gpointer *) &list)))
-		g_hash_table_steal(MIME_APPLICATIONS, k);
-	else
-		k = strdup(key);
-	list = g_list_append(list, app);
-	g_hash_table_replace(MIME_APPLICATIONS, k, list);
-	return TRUE;
-}
-
-/** @brief a gio version of read_mimeapps()
-  */
-void
-read_mimeapps_gio(void)
-{
-	GList *list, *apps;
-
-	for (list = apps = g_app_info_get_all(); list; list = list->next) {
-		GDesktopAppInfo *app = list->data;
-		char *value, *p, *token;
-		GHashTable *types;
-		GList *alias;
-
-		for (p = value = g_desktop_app_info_get_string(app, "OnlyShowIn");
-		     (token = strtok(p, ";")); p = NULL)
-			g_hash_table_add(XDG_DESKTOPS, strdup(token));
-		g_free(value);
-		for (p = value = g_desktop_app_info_get_string(app, "NotShowIn");
-		     (token = strtok(p, ";")); p = NULL)
-			g_hash_table_add(XDG_DESKTOPS, strdup(token));
-		g_free(value);
-		for (p = value = g_desktop_app_info_get_string(app, "Categories");
-		     (token = strtok(p, ";")); p = NULL)
-			g_hash_table_add(XDG_CATEGORIES, strdup(token));
-		g_free(value);
-		types = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, NULL);
-		for (p = value = g_desktop_app_info_get_string(app, "MimeType");
-		     (token = strtok(p, ";")); p = NULL) {
-			g_hash_table_add(types, strdup(token));
-			for (alias = g_hash_table_lookup(MIME_ALIASES, token); alias;
-			     alias = alias->next)
-				g_hash_table_add(types, strdup(alias->data));
-		}
-		g_free(value);
-		g_hash_table_foreach_remove(types, &add_application, app);
-		g_hash_table_destroy(types);
-	}
-	g_list_free(apps);
-}
-
-static void
-read_primary_data(void)
-{
-	read_icons();
-	read_aliases();
-	read_subclasses();
-	read_mimeapps();
-}
-
 /** @brief get icon names for a content type
   *
   * Given a mime type, returns a list of icon names, or NULL when
@@ -2920,6 +2638,285 @@ get_categories(void)
 	g_hash_table_foreach(XDG_CATEGORIES, &get_keys, &categories);
 	categories = g_list_sort(categories, &string_compare);
 	return (categories);
+}
+
+/** @brief read generic icons
+  *
+  * Initialization function that reads the XDG shared-mime specification
+  * compliant generic icons from the files in %s/mime/generic-icons and places
+  * the icons into a global hash MIME_GENERIC_ICONS keyed by mime type.  This
+  * hash is later used by get_icons() to find icons for various mime types.
+  *
+  * This function is idempotent and can be called at any time to update the
+  * hash.
+  */
+static void
+read_icons(void)
+{
+	const gchar *const *sysdirs;
+	const gchar *usrdir;
+	GList *dirs = NULL, *dir;
+	char *b;
+
+	if (!MIME_GENERIC_ICONS)
+		MIME_GENERIC_ICONS =
+		    g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
+	usrdir = g_get_user_data_dir();
+	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/generic-icons", usrdir));
+	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
+		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/generic-icons", *sysdirs));
+	b = calloc(BUFSIZ, sizeof(*b));
+	for (dir = dirs; dir; dir = dir->next) {
+		FILE *file;
+		char *p;
+
+		if (!(file = fopen(dir->data, "r"))) {
+			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
+			continue;
+		}
+		while (fgets(b, BUFSIZ, file)) {
+			*strchrnul(b, '\n') = '\0';
+			if ((p = strchr(b, ':'))) {
+				*p++ = '\0';
+				g_hash_table_replace(MIME_GENERIC_ICONS, strdup(b), strdup(p));
+			}
+		}
+		fclose(file);
+	}
+	free(b);
+	g_list_free_full(dirs, &xde_list_free);
+}
+
+static void
+list_free(gpointer data)
+{
+	g_list_free_full(data, g_free);
+}
+
+/** @brief read mime aliases
+  *
+  * Initialization function that reads the XDG shared-mime specification
+  * compilant aliases from the files in %s/mime/aliases and places the aliases
+  * into a global hash MIME_ALIASES keyed by mime type.  This is lated used by
+  * get_icons() and read_mimeapps() to find icons and applications for various
+  * mime types.
+  *
+  * This method is idempotent and can be called at any time to update the
+  * hash.
+  */
+static void
+read_aliases(void)
+{
+	const gchar *const *sysdirs;
+	const gchar *usrdir;
+	GList *dirs = NULL, *dir;
+	char *b;
+
+	if (!MIME_ALIASES)
+		MIME_ALIASES = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
+	usrdir = g_get_user_data_dir();
+	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/aliases", usrdir));
+	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
+		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/aliases", *sysdirs));
+	b = calloc(BUFSIZ, sizeof(*b));
+	for (dir = dirs; dir; dir = dir->next) {
+		FILE *file;
+		char *p, *q, *k;
+		GList *list;
+
+		if (!(file = fopen(dir->data, "r"))) {
+			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
+			continue;
+		}
+		while (fgets(b, BUFSIZ, file)) {
+			*strchrnul(b, '\n') = '\0';
+			if ((p = strtok(b, " \t")) && (q = strtok(NULL, " \t"))) {
+				list = NULL;
+				if (g_hash_table_lookup_extended
+				    (MIME_ALIASES, p, (gpointer *) &k, (gpointer *) &list))
+					g_hash_table_steal(MIME_ALIASES, k);
+				else
+					k = strdup(p);
+				list = g_list_append(list, strdup(q));
+				g_hash_table_replace(MIME_ALIASES, k, list);
+
+				list = NULL;
+				if (g_hash_table_lookup_extended
+				    (MIME_ALIASES, q, (gpointer *) &k, (gpointer *) &list))
+					g_hash_table_steal(MIME_ALIASES, k);
+				else
+					k = strdup(q);
+				list = g_list_append(list, strdup(p));
+				g_hash_table_replace(MIME_ALIASES, k, list);
+			}
+		}
+		fclose(file);
+	}
+	free(b);
+	g_list_free_full(dirs, &xde_list_free);
+}
+
+/** @brief read mime subclasses
+  *
+  * Initialization function that reads the XDG share-mime specification
+  * compliant subclasses from the files in %s/mime/subclasses and places the
+  * subclasses into a global hash MIME_SUBCLASSES keyed by mime type.  This is
+  * later used by get_icons() and read_mimeapps() to find icons and
+  * applications for various mime types.
+  */
+static void
+read_subclasses(void)
+{
+	const gchar *const *sysdirs;
+	const gchar *usrdir;
+	GList *dirs = NULL, *dir;
+	char *b;
+
+	if (!MIME_SUBCLASSES)
+		MIME_SUBCLASSES =
+		    g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
+	usrdir = g_get_user_data_dir();
+	dirs = g_list_append(dirs, g_strdup_printf("%s/mime/subclasses", usrdir));
+	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
+		dirs = g_list_prepend(dirs, g_strdup_printf("%s/mime/subclasses", *sysdirs));
+	b = calloc(BUFSIZ, sizeof(*b));
+	for (dir = dirs; dir; dir = dir->next) {
+		FILE *file;
+		char *p, *q, *k;
+
+		if (!(file = fopen(dir->data, "r"))) {
+			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
+			continue;
+		}
+		while (fgets(b, BUFSIZ, file)) {
+			*strchrnul(b, '\n') = '\0';
+			if ((p = strtok(b, " \t")) && (q = strtok(NULL, " \t"))) {
+				GList *list = NULL;
+
+				if (g_hash_table_lookup_extended
+				    (MIME_SUBCLASSES, p, (gpointer *) &k, (gpointer *) &list))
+					g_hash_table_steal(MIME_SUBCLASSES, k);
+				else
+					k = strdup(p);
+				list = g_list_append(list, strdup(q));
+				g_hash_table_replace(MIME_SUBCLASSES, k, list);
+			}
+		}
+		fclose(file);
+	}
+	free(b);
+	g_list_free_full(dirs, &xde_list_free);
+}
+
+/** @brief map gvfs applications to mime types
+  *
+  * gnome-vfs-2.0 has its own idea of the mapping of mime types to
+  * applications outside of the XDG desktop specificaiton.  This method uses
+  * the gnome-vfs application registry to retrieve those applications.  This
+  * provides a somewhat richer mapping verses using the XDG desktop
+  * specification applications files alone.  This method is used by
+  * read_mimeapps() to get a fuller set of mime type to application mappings.
+  */
+GList *
+read_gvfsapps(void)
+{
+	GList *apps = NULL;
+
+	return (apps);
+}
+
+/** @brief map applications to mime types
+  *
+  * Initialization function that uses read_gvfsapps() and get_applications()
+  * to get all of the applications known to gnome-vfs-2.0 and those specified
+  * according to the XDG desktop specification.  These applicaitons are placed
+  * into the global hash MIME_APPLICATIONS keyed by application id.  This is
+  * later used by get_apps_and_subs() to retrieve applications and subclass
+  * applications associated with a mime type.
+  *
+  * This method is idempotent and can be called at any time to update the
+  * hash.
+  */
+static void
+read_mimeapps(void)
+{
+#if 0
+	GList *gvfs_list, *apps_list, *list, *item;
+
+	if (!MIME_APPLICATIONS)
+		MIME_APPLICATIONS = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, g_free);
+	gvfs_list = read_gvfsapps();
+	apps_list = get_applications();
+	list = g_list_concat(gvfs_list, apps_list);
+	for (item = list; item; item = item->next) {
+	}
+#endif
+}
+
+static gboolean
+add_application(gpointer key, gpointer value, gpointer user_data)
+{
+	GDesktopAppInfo *app = user_data;
+	GList *list = NULL;
+	char *k;
+
+	if ((g_hash_table_lookup_extended
+	     (MIME_APPLICATIONS, key, (gpointer *) &k, (gpointer *) &list)))
+		g_hash_table_steal(MIME_APPLICATIONS, k);
+	else
+		k = strdup(key);
+	list = g_list_append(list, app);
+	g_hash_table_replace(MIME_APPLICATIONS, k, list);
+	return TRUE;
+}
+
+/** @brief a gio version of read_mimeapps()
+  */
+void
+read_mimeapps_gio(void)
+{
+	GList *list, *apps;
+
+	for (list = apps = g_app_info_get_all(); list; list = list->next) {
+		GDesktopAppInfo *app = list->data;
+		char *value, *p, *token;
+		GHashTable *types;
+		GList *alias;
+
+		for (p = value = g_desktop_app_info_get_string(app, "OnlyShowIn");
+		     (token = strtok(p, ";")); p = NULL)
+			g_hash_table_add(XDG_DESKTOPS, strdup(token));
+		g_free(value);
+		for (p = value = g_desktop_app_info_get_string(app, "NotShowIn");
+		     (token = strtok(p, ";")); p = NULL)
+			g_hash_table_add(XDG_DESKTOPS, strdup(token));
+		g_free(value);
+		for (p = value = g_desktop_app_info_get_string(app, "Categories");
+		     (token = strtok(p, ";")); p = NULL)
+			g_hash_table_add(XDG_CATEGORIES, strdup(token));
+		g_free(value);
+		types = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, NULL);
+		for (p = value = g_desktop_app_info_get_string(app, "MimeType");
+		     (token = strtok(p, ";")); p = NULL) {
+			g_hash_table_add(types, strdup(token));
+			for (alias = g_hash_table_lookup(MIME_ALIASES, token); alias;
+			     alias = alias->next)
+				g_hash_table_add(types, strdup(alias->data));
+		}
+		g_free(value);
+		g_hash_table_foreach_remove(types, &add_application, app);
+		g_hash_table_destroy(types);
+	}
+	g_list_free(apps);
+}
+
+static void
+read_primary_data(void)
+{
+	read_icons();
+	read_aliases();
+	read_subclasses();
+	read_mimeapps();
 }
 
 static void
