@@ -2650,7 +2650,7 @@ get_icons(const char *mime)
   * editor (vim) in the subs list.
   */
 void
-get_apps_and_subs(const char *mime, GList **apps_p, GList **subs_p)
+get_apps_and_subs_vfs(const char *mime, GList **apps_p, GList **subs_p)
 {
 	GList *apps = NULL, *subs = NULL, *list;
 	gpointer app;
@@ -2689,6 +2689,22 @@ get_apps_and_subs_gio(const char *mime, GList **apps_p, GList **subs_p)
 		*apps_p = apps;
 	if (subs_p)
 		*subs_p = subs;
+	return;
+}
+
+void
+get_apps_and_subs(const char *mime, GList **apps_p, GList **subs_p)
+{
+	GList *apps_g = NULL, *subs_g = NULL;
+	GList *apps_v = NULL, *subs_v = NULL;
+
+	get_apps_and_subs_gio(mime, &apps_g, &subs_g);
+	if (!apps_g || !subs_g)
+		get_apps_and_subs_vfs(mime, &apps_v, &subs_v);
+	if (apps_p)
+		*apps_p = g_list_concat(apps_g, apps_v);
+	if (subs_p)
+		*subs_p = g_list_concat(subs_g, subs_v);
 	return;
 }
 
