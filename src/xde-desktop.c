@@ -2478,6 +2478,60 @@ static GdkFilterReturn root_handler(GdkXEvent *xevent, GdkEvent *event, gpointer
 static void update_layout(XdeScreen *xscr, Atom prop);
 static void update_theme(XdeScreen *xscr, Atom prop);
 
+/** @brief get the mime type of a file
+  *
+  * Get the mime type for the specified file.  This method uses gnome_vfs_uri
+  * to obtain information about the mime type of the file.  The XDG
+  * shared-mime specification could be used directly, however, gnome-vfs-2.0
+  * gives good results for the most part.  As a fall back, when gnome-vfs-2.0
+  * cannot determine the mime type, the "file" program is queried.  "file"
+  * gives less consistent requlest thatn gnome-vfs-2.0.  The previous two
+  * approaches examine the file but do not consider the name.  As a final fall
+  * back, gnome-vfs-2.0 is used to query for a mime type based solely on the
+  * file name.  Heuristically, this approach gives good results for
+  * determining the mime types of any file.
+  */
+char *
+get_mime_type(const char *file)
+{
+	GnomeVFSFileInfo *info;
+	char *mime = NULL;
+	const char *type;
+
+	if ((info = gnome_vfs_file_info_new())) {
+		if (gnome_vfs_get_file_info(file, info,
+					    GNOME_VFS_FILE_INFO_DEFAULT |
+					    GNOME_VFS_FILE_INFO_GET_MIME_TYPE |
+					    GNOME_VFS_FILE_INFO_FORCE_SLOW_MIME_TYPE) ==
+		    GNOME_VFS_OK) {
+			if ((type = gnome_vfs_file_info_get_mime_type(info)))
+				mime = strdup(type);
+		}
+		gnome_vfs_file_info_unref(info);
+	}
+	if (!mime) {
+		FILE *cmd;
+		char *command;
+
+		command = g_strdup_printf("file -b --mime-type \"%s\"", file);
+		if ((cmd = popen(command, "r"))) {
+			char buffer[BUFSIZ] = { 0, };
+
+			if (fgets(buffer, BUFSIZ, cmd)) {
+				*strchrnul(buffer, '\n') = '\0';
+				mime = strdup(buffer);
+			}
+			pclose(cmd);
+		}
+		g_free(command);
+	}
+	if (!mime) {
+		if ((type = gnome_vfs_get_mime_type_for_name(file)))
+			mime = strdup(type);
+	}
+	return (mime);
+}
+
 /** @brief get icon names for a content type
   *
   * Given a mime type, returns a list of icon names, or NULL when
