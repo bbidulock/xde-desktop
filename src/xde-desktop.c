@@ -2478,6 +2478,7 @@ static GdkFilterReturn root_handler(GdkXEvent *xevent, GdkEvent *event, gpointer
 static void update_layout(XdeScreen *xscr, Atom prop);
 static void update_theme(XdeScreen *xscr, Atom prop);
 
+
 /** @brief get the mime type of a file
   *
   * Get the mime type for the specified file.  This method uses gnome_vfs_uri
@@ -2491,8 +2492,8 @@ static void update_theme(XdeScreen *xscr, Atom prop);
   * file name.  Heuristically, this approach gives good results for
   * determining the mime types of any file.
   */
-char *
-get_mime_type(const char *file)
+static char *
+get_mime_type_vfs(const char *file)
 {
 	GnomeVFSFileInfo *info;
 	char *mime = NULL;
@@ -2534,7 +2535,7 @@ get_mime_type(const char *file)
 
 /** @brief gio version of get_mime_type()
   */
-char *
+static char *
 get_mime_type_gio(const char *filename)
 {
 	GFile *file;
@@ -2552,6 +2553,16 @@ get_mime_type_gio(const char *filename)
 		}
 		g_object_unref(file);
 	}
+	return (mime);
+}
+
+char *
+get_mime_type(const char *filename)
+{
+	char *mime;
+
+	if (!(mime = get_mime_type_gio(filename)))
+		mime = get_mime_type_vfs(filename);
 	return (mime);
 }
 
