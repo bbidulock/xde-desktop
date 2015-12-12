@@ -2532,6 +2532,29 @@ get_mime_type(const char *file)
 	return (mime);
 }
 
+/** @brief gio version of get_mime_type()
+  */
+char *
+get_mime_type_gio(const char *filename)
+{
+	GFile *file;
+	GFileInfo *info;
+	char *mime = NULL;
+	const char *type;
+
+	if ((file = g_file_new_for_path(filename))) {
+		if ((info = g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
+					      G_FILE_QUERY_INFO_NONE, NULL, NULL))) {
+			if ((type = g_file_info_get_attribute_string(info,
+								     G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE)))
+				mime = g_content_type_get_mime_type(type);
+			g_object_unref(info);
+		}
+		g_object_unref(file);
+	}
+	return (mime);
+}
+
 /** @brief get icon names for a content type
   *
   * Given a mime type, returns a list of icon names, or NULL when
