@@ -2754,6 +2754,90 @@ get_categories(void)
 	return (categories);
 }
 
+static void
+list_free(gpointer data)
+{
+	g_list_free_full(data, g_free);
+}
+
+/** @brief get hash of default applications, added and removed associations.
+  *
+  * Merge all the "mimeapps.list" files into a single hash elmeent with
+  * "Default Applications", "Added Associations" and "Removed Associations"
+  * tags.
+  */
+void
+get_mimeapps(GHashTable **default_applications_p, GHashTable **added_associations_p,
+	     GHashTable **removed_associations_p)
+{
+	GHashTable *default_applications;
+	GHashTable *added_associations;
+	GHashTable *removed_associations;
+	const gchar *const *sysdirs;
+	const gchar *usrdir;
+	GList *dirs = NULL, *dir;
+	char *b;
+
+	default_applications = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
+	added_associations = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
+	removed_associations = g_hash_table_new_full(&g_str_hash, &g_str_equal, g_free, list_free);
+
+	usrdir = g_get_user_data_dir();
+	dirs = g_list_append(dirs, g_strdup_printf("%s/applications/mimeapps.list", usrdir));
+	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
+		dirs =
+		    g_list_prepend(dirs,
+				   g_strdup_printf("%s/applications/mimeapps.list", *sysdirs));
+	b = calloc(BUFSIZ, sizeof(*b));
+	for (dir = dirs; dir; dir = dir->next) {
+		FILE *file;
+		char *p, *q, *section = NULL, *mime, *app;
+		GHashTable *table = NULL;
+
+		if (!(file = fopen(dir->data, "r"))) {
+			DPRINTF("%s: %s\n", (char *) dir->data, strerror(errno));
+			continue;
+		}
+		while (fgets(b, BUFSIZ, file)) {
+			*strchrnul(b, '\n') = '\0';
+			if ((p = strchr(b, '[')) && (q = strrchr(b, ']'))) {
+				p++;
+				*q = '\0';
+				if (!strcmp(p, "Default Applications")) {
+					section = strdup(p);
+					table = default_applications;
+				} else if (!strcmp(p, "Added Associations")) {
+					section = strdup(p);
+					table = added_associations;
+				} else if (!strcmp(p, "Removed Associations")) {
+					section = strdup(p);
+					table = removed_associations;
+				} else {
+					free(section);
+					section = NULL;
+					table = NULL;
+				}
+			} else if (section && (q = strchr(b, '='))) {
+				GList *apps = NULL;
+
+				*q++ = '\0';
+				mime = strdup(b);
+				for (p = q; (app = strtok(p, ";")); p = NULL)
+					apps = g_list_append(apps, strdup(app));
+				g_hash_table_replace(table, mime, apps);
+			}
+		}
+	}
+	free(b);
+	if (default_applications_p)
+		*default_applications_p = default_applications;
+	if (added_associations_p)
+		*added_associations_p = added_associations;
+	if (removed_associations_p)
+		*removed_associations_p = removed_associations;
+	return;
+}
+
 /** @brief read generic icons
   *
   * Initialization function that reads the XDG shared-mime specification
@@ -2799,12 +2883,6 @@ read_icons(void)
 	}
 	free(b);
 	g_list_free_full(dirs, &xde_list_free);
-}
-
-static void
-list_free(gpointer data)
-{
-	g_list_free_full(data, g_free);
 }
 
 /** @brief read mime aliases
@@ -2952,7 +3030,7 @@ read_gvfsapps(void)
   * hash.
   */
 static void
-read_mimeapps(void)
+read_mimeapps_vfs(void)
 {
 #if 0
 	GList *gvfs_list, *apps_list, *list, *item;
@@ -2986,7 +3064,7 @@ add_application(gpointer key, gpointer value, gpointer user_data)
 
 /** @brief a gio version of read_mimeapps()
   */
-void
+static void
 read_mimeapps_gio(void)
 {
 	GList *list, *apps;
@@ -3022,6 +3100,13 @@ read_mimeapps_gio(void)
 		g_hash_table_destroy(types);
 	}
 	g_list_free(apps);
+}
+
+static void
+read_mimeapps(void)
+{
+	read_mimeapps_vfs();
+	read_mimeapps_gio();
 }
 
 static void
