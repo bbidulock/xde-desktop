@@ -2906,6 +2906,22 @@ get_desktops(void)
 	return (desktops);
 }
 
+/** @brief get list of used categories
+  *
+  * Returns a list of the categories that appeared in the "Categories" key
+  * fields of XDG desktop applications files.  This will be used to present
+  * the user a choice when adding custom applications.
+  */
+GList *
+get_categories(void)
+{
+	GList *categories = NULL;
+
+	g_hash_table_foreach(XDG_CATEGORIES, &get_keys, &categories);
+	categories = g_list_sort(categories, &string_compare);
+	return (categories);
+}
+
 static void
 do_run(int argc, char *argv[], Bool replace)
 {
