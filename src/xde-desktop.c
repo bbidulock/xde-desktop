@@ -2760,8 +2760,8 @@ list_free(gpointer data)
 	g_list_free_full(data, g_free);
 }
 
-void
-_get_dir_apps(const char *dir, const char *path, const char *pref, GHashTable *apps)
+static void
+_get_dir_apps(const char *dir, const char *path, const char *pref, GHashTable *appids)
 {
 	DIR *dh;
 	char *dirname;
@@ -2783,21 +2783,53 @@ _get_dir_apps(const char *dir, const char *path, const char *pref, GHashTable *a
 			apid =
 			    pref ? g_strdup_printf("%s-%s", pref, d->d_name) : g_strdup(d->d_name);
 			if (d->d_type == DT_DIR) {
-				_get_dir_apps(dir, name, apid, apps);
-				g_free(apid);
-			} else if (d->d_type == DT_LNK || d->d_type == DT_REG) {
-				GDesktopAppInfo *info;
-
-				if ((info = g_desktop_app_info_new_from_filename(name)))
-					g_hash_table_replace(apps, apid, info);
-				else
-					g_free(apid);
+				_get_dir_apps(dir, name, apid, appids);
+			} else if ((d->d_type == DT_LNK || d->d_type == DT_REG)
+				   && strstr(d->d_name, ".desktop")) {
+				g_hash_table_replace(appids, apid, name);
+				continue;
 			}
+			g_free(apid);
 			g_free(name);
 		}
 		closedir(dh);
 	}
 	g_free(dirname);
+}
+
+static void
+app_free(gpointer user_data)
+{
+	g_object_unref(user_data);
+}
+
+GHashTable *
+get_applications(void)
+{
+	const gchar *const *sysdirs;
+	const gchar *usrdir;
+	GList *dirs = NULL, *dir;
+	GHashTable *appids, *apps;
+	GHashTableIter iter;
+	gpointer key, val;
+
+	usrdir = g_get_user_data_dir();
+	dirs = g_list_append(dirs, g_strdup_printf("%s/applications", usrdir));
+	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
+		dirs = g_list_prepend(dirs, g_strdup_printf("%s/applications", *sysdirs));
+	appids = g_hash_table_new_full(&g_str_hash, &g_str_equal, &g_free, &g_free);
+	for (dir = dirs; dir; dir = dir->next)
+		_get_dir_apps(dir->data, NULL, NULL, appids);
+	apps = g_hash_table_new_full(&g_str_hash, &g_str_equal, &g_free, &app_free);
+	g_hash_table_iter_init(&iter, appids);
+	while (g_hash_table_iter_next(&iter, &key, &val)) {
+		GDesktopAppInfo *app;
+
+		if ((app = g_desktop_app_info_new_from_filename(val)))
+			g_hash_table_replace(apps, strdup(key), app);
+	}
+	g_hash_table_destroy(appids);
+	return (apps);
 }
 
 /** @brief get hash of default applications, added and removed associations.
@@ -2825,9 +2857,8 @@ get_mimeapps(GHashTable **default_applications_p, GHashTable **added_association
 	usrdir = g_get_user_data_dir();
 	dirs = g_list_append(dirs, g_strdup_printf("%s/applications/mimeapps.list", usrdir));
 	for (sysdirs = g_get_system_data_dirs(); sysdirs && *sysdirs; sysdirs++)
-		dirs =
-		    g_list_prepend(dirs,
-				   g_strdup_printf("%s/applications/mimeapps.list", *sysdirs));
+		dirs = g_list_prepend(dirs,
+				      g_strdup_printf("%s/applications/mimeapps.list", *sysdirs));
 	b = calloc(BUFSIZ, sizeof(*b));
 	for (dir = dirs; dir; dir = dir->next) {
 		FILE *file;
