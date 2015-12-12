@@ -2575,8 +2575,8 @@ get_mime_type(const char *filename)
   * reasonable icon representation of the mime type.  Use when displaying an
   * icon for a given desktop object.
   */
-GList *
-get_icons(const char *mime)
+static GList *
+get_icons_vfs(const char *mime)
 {
 	GList *icons = NULL, *aliases, *mimes = NULL, *list, *classes;
 
@@ -2609,7 +2609,7 @@ get_icons(const char *mime)
 
 /** @brief gio version of get_icons().
   */
-GList *
+static GList *
 get_icons_gio(const char *mime)
 {
 	GList *icons = NULL;
@@ -2627,6 +2627,16 @@ get_icons_gio(const char *mime)
 		icons = g_list_append(icons, name);
 	g_free(type);
 	return (icons);
+}
+
+GList *
+get_icons(const char *mime)
+{
+	GList *list;
+
+	if (!(list = get_icons_gio(mime)))
+		list = get_icons_vfs(mime);
+	return (list);
 }
 
 /** @brief application ids for a mime type
