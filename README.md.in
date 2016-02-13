@@ -4,12 +4,13 @@
 Package @PACKAGE@-@VERSION@ was released under GPL license @DATE@.
 
 This package provides a desktop for the XDE (X Desktop Environment).
-As with other XDE utilties, this package is intended on working with
+As with other XDE utilities, this package is intended on working with
 the wide range of lightweight window managers supported by the XDE.
 This desktop was originally written in perl(1) and was part of the
-xde-tools package, then later in `C` in the xde-ctools package.  It
+xde-tools package, then later in "C" in the xde-ctools package.  It
 has now been split off to a separate package for those that just want
 to run the desktop.
+
 
 ### Release
 
