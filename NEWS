@@ -1,11 +1,85 @@
-xde-desktop -- NEWS file.  2015-12-12
+xde-desktop -- history of user-visible changes.  2016-07-09
 
-History of major user-visible changes:
-======================================
-
-Release xde-desktop-0.1.64 released 2015-12-12
+Release xde-desktop-0.2 released 2016-07-09
 -------------------------------------------
 
-This is the initial development release of xde-desktop.
+git shortlog -e -n -w80,6,8 0.1...0.2
 
-# vim: set ft=asciidoc tw=72 nocin nosi fo+=tcqlorn:
+Brian Bidulock <bidulock@openss7.org> (67):
+      added news file
+      added readme file
+      added ignore file
+      added thanks file
+      added todo file
+      added indent file
+      added configure file
+      added maintainer configure script
+      added autogen script
+      added maintainer rebuild script
+      added primary makefile
+      added desktop file makefile
+      added desktop file
+      added documentation makefile
+      added manual page
+      added source code makefile
+      added initial source file
+      also generate markdown readme
+      updated readmes
+      updated markdown readme
+      start creating desktop
+      more desktop creation
+      working up desktop creation
+      working up desktop
+      working up desktop
+      separate out path lists
+      free lists first
+      working up desktop some more
+      create windows
+      restructure by desktop
+      add note
+      manpage updates
+      updating manual page
+      resection manual page
+      prepare to update workareas
+      handle workareas
+      a few more types
+      make init_window look like create_desktop
+      make init_window work like create_desktop
+      remove create_desktop
+      assign table to screen
+      initialize gnome-vfs
+      read generic icons
+      comments for read_icons
+      read mime aliases
+      read mime subclasses
+      read mime applications comments
+      basic and gio versions of get_icons()
+      implement get_apps_and_subs()
+      add gio version of read_mimeapps()
+      add get_desktops() function
+      implement get_categories()
+      reorganize like perl module
+      implement get_mime_type()
+      gio version of get_mime_type
+      merge vfs and gio approaches
+      merge vfs and gio approaches to get_icons()
+      merge vfs and gio approaches to get_apps_and_subs()
+      added get_mimeapps() implementation
+      implement recursive get_dir_apps()
+      faster get_applications()
+      remove unused functions and options
+      handle copying root images
+      handle setting background style
+      minor updates to build system
+      add ignore files
+      simplify distribution
+
+
+Release xde-desktop-0.1 released 2015-12-06
+-------------------------------------------
+
+git shortlog -e -n -w80,6,8 0.1
+
+Brian Bidulock <bidulock@openss7.org> (1):
+      added authors file
+

@@ -1,5 +1,48 @@
 # created with git log --stat=76 -M -C|fmt -sct -w80
 
+commit 0de4dd63a60ba7a015bd19eebda24dc0a7e50bc3
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Jul 9 16:23:20 2016 -0600
+
+    simplify distribution
+
+ .gitignore                         |  23 +-
+ AUTHORS.in => AUTHORS              |   2 +-
+ ChangeLog                          | 600 +++++++++++++++++++++++++++++++++
+ Makefile.am                        |  79 +++--
+ NEWS.in => NEWS                    |   6 +-
+ README.in                          |  72 ----
+ THANKS.in => THANKS                |   2 +-
+ TODO.in => TODO                    |   2 +-
+ autogen.sh                         |  55 +--
+ configure.template => configure.ac |   6 +-
+ dist.sh                            |   9 +
+ gennews.sh                         |  34 ++
+ rebuild.sh                         |   4 +-
+ 13 files changed, 734 insertions(+), 160 deletions(-)
+
+commit 6f0f34840b311f9f437c04c83d7eb4ff03f93115
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Oct 24 12:00:00 2015 -0600
+
+    add ignore files
+
+ .gitignore | 1 +
+ 1 file changed, 1 insertion(+)
+
+commit 5661562bcaf7169975db74e449eb2fb3404f9d60
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Feb 13 07:11:20 2016 -0700
+
+    minor updates to build system
+
+ Makefile.am  |  2 +-
+ README.md    |  9 +++++----
+ README.md.in |  5 +++--
+ autogen.sh   | 15 +++++++++------
+ rebuild.sh   |  3 ++-
+ 5 files changed, 20 insertions(+), 14 deletions(-)
+
 commit 16a8ff147e6a9ac5cb32a277b329caa469070aaa
 Author: Brian Bidulock <bidulock@openss7.org>
 Date:   Sat Dec 12 11:04:49 2015 -0700

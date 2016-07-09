@@ -1,7 +1,7 @@
 
 AC_PREREQ(2.69)
-AC_INIT([xde-desktop],[0.1.66],[http://github.com/bbidulock/xde-desktop],[xde-desktop],[http://github.com/bbidulock/xde-desktop/issues])
-AC_REVISION([0.1.66])
+AC_INIT([xde-desktop],[0.2],[http://github.com/bbidulock/xde-desktop],[xde-desktop],[http://github.com/bbidulock/xde-desktop/issues])
+AC_REVISION([0.2])
 
 AC_CONFIG_SRCDIR([src/xde-desktop.c])
 AC_CONFIG_HEADERS([autoconf.h])
@@ -9,7 +9,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([scripts])
 AC_USE_SYSTEM_EXTENSIONS
 
-DATE='2016-03-15'
+DATE='2016-07-09'
 AC_SUBST([DATE])
 
 AM_INIT_AUTOMAKE([gnits 1.14 dist-xz no-dist-gzip std-options -Wall color-tests silent-rules tar-pax])
