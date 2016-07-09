@@ -1,11 +1,11 @@
-@PACKAGE@ -- NEWS file.  @DATE@
+xde-desktop -- NEWS file.  2015-12-12
 
 History of major user-visible changes:
 ======================================
 
-Release @PACKAGE@-@VERSION@ released @DATE@
+Release xde-desktop-0.1.64 released 2015-12-12
 -------------------------------------------
 
-This is the initial development release of @PACKAGE@.
+This is the initial development release of xde-desktop.
 
 # vim: set ft=asciidoc tw=72 nocin nosi fo+=tcqlorn:

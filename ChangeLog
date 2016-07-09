@@ -1,0 +1,600 @@
+# created with git log --stat=76 -M -C|fmt -sct -w80
+
+commit 16a8ff147e6a9ac5cb32a277b329caa469070aaa
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Dec 12 11:04:49 2015 -0700
+
+    handle setting background style
+
+ src/xde-desktop.c | 25 +++++++++++++++----------
+ 1 file changed, 15 insertions(+), 10 deletions(-)
+
+commit d887d98ce8187409d6bab42adbcf972b13589c02
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Dec 12 10:33:35 2015 -0700
+
+    handle copying root images
+
+ .indent.pro       |   2 +
+ src/xde-desktop.c | 102 ++++++++++++++++++++++----------------------------
+ 2 files changed, 46 insertions(+), 58 deletions(-)
+
+commit 5a30e3d97896ac58cdad8ed1aadb3dd13b88d6c1
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Dec 12 08:59:54 2015 -0700
+
+    remove unused functions and options
+
+ src/xde-desktop.c | 1389 ++++---------------------------------------------
+ 1 file changed, 99 insertions(+), 1290 deletions(-)
+
+commit ab6da23a5712aa2a3d6a56f90abb0e3813eca2e8
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Dec 12 01:36:15 2015 -0700
+
+    faster get_applications()
+
+ src/xde-desktop.c | 59 +++++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 45 insertions(+), 14 deletions(-)
+
+commit be8118fb639a208c745256375f69a3aaa7658bbb
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Dec 12 00:35:04 2015 -0700
+
+    implement recursive get_dir_apps()
+
+ src/xde-desktop.c | 42 +++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 41 insertions(+), 1 deletion(-)
+
+commit 8823c00efcf9807b4dea68599036d095ab9b081e
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 19:23:35 2015 -0700
+
+    added get_mimeapps() implementation
+
+ src/xde-desktop.c | 101 ++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 93 insertions(+), 8 deletions(-)
+
+commit 3addbddd0c29b36a2e2f9687a370c4cfcaa002d3
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 18:31:15 2015 -0700
+
+    merge vfs and gio approaches to get_apps_and_subs()
+
+ src/xde-desktop.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+commit 39d872423eebfc359fc0b3578a41a9a5e695f3d2
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 18:26:51 2015 -0700
+
+    merge vfs and gio approaches to get_icons()
+
+ src/xde-desktop.c | 16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)
+
+commit 9ab45cb3f03948e816a1394e751e2923f5d69cf5
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 18:25:12 2015 -0700
+
+    merge vfs and gio approaches
+
+ src/xde-desktop.c | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
+
+commit 0444b0cc8baadb2ce9899493e270c32ada451df3
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 18:23:13 2015 -0700
+
+    gio version of get_mime_type
+
+ src/xde-desktop.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+commit 79790e6c670b5849fac88d3910448a6b578219ef
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 18:07:19 2015 -0700
+
+    implement get_mime_type()
+
+ src/xde-desktop.c | 54 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 54 insertions(+)
+
+commit 34360b697085ecb6110fe00587e0230a57d76f5b
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 17:35:50 2015 -0700
+
+    reorganize like perl module
+
+ src/xde-desktop.c | 339 +++++++++++++++++++++++++-------------------------
+ 1 file changed, 168 insertions(+), 171 deletions(-)
+
+commit a4da3382eacd606df03a6dd8d355eb1d96ea9a3e
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 17:32:56 2015 -0700
+
+    implement get_categories()
+
+ src/xde-desktop.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+commit ec355009892307c6a0c7be2cd36b8bfbf150532b
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 17:30:48 2015 -0700
+
+    add get_desktops() function
+
+ src/xde-desktop.c | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+commit 83d70d0b64abe0458b5d72419dd2b46efc709a1c
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 17:20:55 2015 -0700
+
+    add gio version of read_mimeapps()
+
+ src/xde-desktop.c | 62 ++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 61 insertions(+), 1 deletion(-)
+
+commit 0835240ab8a555d448ca62509f4739fc07f5425f
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 11:35:21 2015 -0700
+
+    implement get_apps_and_subs()
+
+ src/xde-desktop.c | 151 ++++++++++++++++++++++++++++++++++----------------
+ 1 file changed, 102 insertions(+), 49 deletions(-)
+
+commit 9f60927131e0e00a7f5702322bc7c87ff2a4c562
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Fri Dec 11 11:11:45 2015 -0700
+
+    basic and gio versions of get_icons()
+
+ src/xde-desktop.c | 98 ++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 97 insertions(+), 1 deletion(-)
+
+commit a51b3b73a9f677d8b5b03d502b1bed762865e21d
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 10:46:55 2015 -0700
+
+    read mime applications comments
+
+ src/xde-desktop.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+commit db367944ec70dcd7569b363689d2fafc7a64404d
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 10:36:35 2015 -0700
+
+    read mime subclasses
+
+ src/xde-desktop.c | 83 +++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 77 insertions(+), 6 deletions(-)
+
+commit 2059e1ab5b24bb787ad69f9c9d33227b83d73f0e
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 10:04:48 2015 -0700
+
+    read mime aliases
+
+ src/xde-desktop.c | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 44 insertions(+)
+
+commit b1e75eef4584c5aab3b31e645fc2bf49587f9915
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 09:51:03 2015 -0700
+
+    comments for read_icons
+
+ src/xde-desktop.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+commit d6278104dd9b4c9abe3be2edc65544ee012d5119
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 09:47:47 2015 -0700
+
+    read generic icons
+
+ src/xde-desktop.c | 63 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
+
+commit 09656454f67c25bdc6efb572843dc2730aa0592f
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 07:32:50 2015 -0700
+
+    initialize gnome-vfs
+
+ configure.template | 1 +
+ src/Makefile.am    | 4 ++--
+ src/xde-desktop.c  | 4 ++++
+ 3 files changed, 7 insertions(+), 2 deletions(-)
+
+commit 6f531e2adb399052caa0e825610789e6f073d2d4
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 07:22:30 2015 -0700
+
+    assign table to screen
+
+ src/xde-desktop.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
+
+commit b2cb3f0c14fa0641490edce9921de173fb7f5ff2
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 06:05:13 2015 -0700
+
+    remove create_desktop
+
+ src/xde-desktop.c | 154 --------------------------------------------------
+ 1 file changed, 154 deletions(-)
+
+commit 884b8a342fbdb38d2618a0eb3a7ba7f0696352e6
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 06:04:37 2015 -0700
+
+    make init_window work like create_desktop
+
+ src/xde-desktop.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+commit 3fd2688b9bc33bf28c1af3f32139e2fb56461ef5
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 06:03:11 2015 -0700
+
+    make init_window look like create_desktop
+
+ src/xde-desktop.c | 400 +++++++++++++++++++++++++++-----------------------
+ 1 file changed, 214 insertions(+), 186 deletions(-)
+
+commit fb21987bf1c281865e9cac1f60e9d2e6af2bf069
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 05:43:13 2015 -0700
+
+    a few more types
+
+ .indent.pro | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+commit 53f45c3107ddcab8020d7ab0c8a1c13647a1a1d5
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 05:11:13 2015 -0700
+
+    handle workareas
+
+ src/xde-desktop.c | 74 +++++++++++++++++++++++++++++++--------------------
+ 1 file changed, 45 insertions(+), 29 deletions(-)
+
+commit ad371fce354a4d8a33f95b79a8a0029896742abb
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Dec 10 00:04:58 2015 -0700
+
+    prepare to update workareas
+
+ README.md         |   4 +-
+ src/xde-desktop.c | 112 ++++++++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 92 insertions(+), 24 deletions(-)
+
+commit 0bfedfa967c694529c7d386572c9741799d4fee4
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Wed Dec 9 07:59:09 2015 -0700
+
+    resection manual page
+
+ man/xde-desktop.pod | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
+
+commit d234f87eb3aceca00d26e0a555af8a3ec0b7a8c8
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Wed Dec 9 07:51:15 2015 -0700
+
+    updating manual page
+
+ man/xde-desktop.pod | 139 ++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 135 insertions(+), 4 deletions(-)
+
+commit 10620984f3ab3f1991cae203934400b2a977a8e5
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Wed Dec 9 07:21:15 2015 -0700
+
+    manpage updates
+
+ README.md           |  4 +--
+ man/xde-desktop.pod | 86 ++++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 76 insertions(+), 14 deletions(-)
+
+commit b82ddf829eaddd9ea1554f22aacdf54f7de75cc1
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Tue Dec 8 23:00:00 2015 -0700
+
+    add note
+
+ src/xde-desktop.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+commit da5dfaa2170e3b8fcbbe7f2785695c02ed2683c3
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Wed Dec 9 01:28:45 2015 -0700
+
+    restructure by desktop
+
+ src/xde-desktop.c | 289 +++++++++++++++++++++++++++++++-------------------
+ 1 file changed, 181 insertions(+), 108 deletions(-)
+
+commit a80cca19a835810d4e487ffab62dad2d15d9469e
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Dec 7 19:53:42 2015 -0700
+
+    create windows
+
+ src/xde-desktop.c | 67 +++++++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 49 insertions(+), 18 deletions(-)
+
+commit c74d699dc0d24fc7232dee0d93d6aa02c56fec6e
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Dec 7 19:39:54 2015 -0700
+
+    working up desktop some more
+
+ src/xde-desktop.c | 80 ++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 79 insertions(+), 1 deletion(-)
+
+commit 41326596f72f3edb9d94732a2cecf2915844798b
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Dec 7 19:15:30 2015 -0700
+
+    free lists first
+
+ src/xde-desktop.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+commit c591dc0cb7d2a341ed65550e49535bd63790d89e
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Dec 7 19:11:25 2015 -0700
+
+    separate out path lists
+
+ src/xde-desktop.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+commit c37eaecca0f0f32c2bad64d2bc35eced114e07a0
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Dec 7 19:09:06 2015 -0700
+
+    working up desktop
+
+ .indent.pro       |  3 ++
+ src/xde-desktop.c | 86 ++++++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 77 insertions(+), 12 deletions(-)
+
+commit c2ed297bb0ffce4df28ce1452c50fff535204db2
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Dec 7 17:54:05 2015 -0700
+
+    working up desktop
+
+ .indent.pro       |   2 +
+ README.md         |   4 +-
+ src/xde-desktop.c | 244 +++++++++++++++++++++++++++++++++++++++++++++++---
+ 3 files changed, 238 insertions(+), 12 deletions(-)
+
+commit fdbac3a490bb6e186801f1038997c0a7b966f42c
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 17:39:47 2015 -0700
+
+    working up desktop creation
+
+ src/xde-desktop.c | 161 ++++++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 137 insertions(+), 24 deletions(-)
+
+commit 8670eeae165b16d7d6b7211c212990c8155fd795
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 09:48:03 2015 -0700
+
+    more desktop creation
+
+ src/xde-desktop.c | 41 ++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 40 insertions(+), 1 deletion(-)
+
+commit 3257e813ee2bd47293765a77b64fcaf0e4372133
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 09:33:27 2015 -0700
+
+    start creating desktop
+
+ README.md         |  4 ++--
+ src/xde-desktop.c | 42 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 44 insertions(+), 2 deletions(-)
+
+commit 8a21e2b26782f97f84c5976ba6996f765e3277ae
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 07:11:33 2015 -0700
+
+    updated markdown readme
+
+ README.md | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
+
+commit 4338c8114cf5f8452286b26260d9202052b88500
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 07:11:00 2015 -0700
+
+    updated readmes
+
+ README.in    | 18 ++++++++++--------
+ README.md    |  4 ++--
+ README.md.in | 20 +++++++++++---------
+ 3 files changed, 23 insertions(+), 19 deletions(-)
+
+commit a25c3b89761cf1f401853be4e13719171542d667
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:59:58 2015 -0700
+
+    also generate markdown readme
+
+ Makefile.am  |  5 ++++-
+ README.md    | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ README.md.in | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ autogen.sh   |  1 +
+ 4 files changed, 137 insertions(+), 1 deletion(-)
+
+commit 0b99f0b918fdbe33d437c9ce75d9f39f9e3de077
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:51:06 2015 -0700
+
+    added initial source file
+
+ src/xde-desktop.c | 3882 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 3882 insertions(+)
+
+commit 3aafa991daac9ed61bccb415a5783bc17a6fe708
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:50:29 2015 -0700
+
+    added source code makefile
+
+ src/Makefile.am | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+commit a8e520170c5e2d53ceca7a1180e35a98e0ff07bb
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:49:06 2015 -0700
+
+    added manual page
+
+ man/xde-desktop.pod | 267 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 267 insertions(+)
+
+commit daabee9a619c8ebd9ff24f3619979e6ba23ea219
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:48:41 2015 -0700
+
+    added documentation makefile
+
+ man/Makefile.am | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+commit 16fcef3ecffd05161df67d7862ca9afc5323d4e4
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:47:23 2015 -0700
+
+    added desktop file
+
+ data/xde-desktop.desktop | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+commit 92621581815f1b343e88facc0418865d35eea5df
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:45:51 2015 -0700
+
+    added desktop file makefile
+
+ data/Makefile.am | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+commit 94c0425d5303a6bd53d18979e57ad9478e52027b
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:44:32 2015 -0700
+
+    added primary makefile
+
+ Makefile.am | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+
+commit a1608a09c2a03f7aa20894181241b0a117b273dd
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:43:49 2015 -0700
+
+    added maintainer rebuild script
+
+ rebuild.sh | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+commit 676631a0c38227b3135b4784b76b642dfaea3fc9
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:43:16 2015 -0700
+
+    added autogen script
+
+ autogen.sh | 41 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 41 insertions(+)
+
+commit 1ca3df0629794bce9aaa7c703622c3bdeaa8fb50
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:40:39 2015 -0700
+
+    added maintainer configure script
+
+ configure.sh | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+commit e70e52338905713a9258955dcdcafc0f5eb5cfa2
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:39:47 2015 -0700
+
+    added configure file
+
+ configure.template | 138 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 138 insertions(+)
+
+commit 5ecbe14b8ff294b4da94d45c6ac7097cfa27615c
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:36:53 2015 -0700
+
+    added indent file
+
+ .indent.pro | 326 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 326 insertions(+)
+
+commit 36b42ca78b0d4dd96ef2ae9b1b1d2581b283190b
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:36:20 2015 -0700
+
+    added todo file
+
+ TODO.in | 79 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 79 insertions(+)
+
+commit b3653282640dfbabb19295b392838f7a38afc4f0
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:35:37 2015 -0700
+
+    added thanks file
+
+ THANKS.in | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+commit addaf3e31e1be4127f4cd9d0b47e5d8ebb04dbbe
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:35:06 2015 -0700
+
+    added ignore file
+
+ .gitignore | 60 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+
+commit 167088060a644914257ff8ecc98c815992fe2a02
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:34:31 2015 -0700
+
+    added readme file
+
+ README.in | 70 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 70 insertions(+)
+
+commit 6afec113a3c87e1502bb8ae0b0c8e6b4e2e3ae4f
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:34:13 2015 -0700
+
+    added news file
+
+ NEWS.in | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+commit be415c4cb09810f3cec5a0c153f04c52e59f8da4
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sun Dec 6 06:33:47 2015 -0700
+
+    added authors file
+
+ AUTHORS.in | 3 +++
+ 1 file changed, 3 insertions(+)
