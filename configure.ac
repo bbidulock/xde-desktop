@@ -15,11 +15,14 @@ AC_CANONICAL_TARGET
 DATE='2016-07-09'
 AC_SUBST([DATE])
 
+MDOCDATE='July 7, 2016'
+AC_SUBST([MDOCDATE])
+
 BRANCH='master'
 AC_SUBST([BRANCH])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([gnits 1.14 dist-xz no-dist-gzip std-options -Wall color-tests silent-rules tar-pax])
+AM_INIT_AUTOMAKE([1.16 dist-lzip no-dist-gzip std-options -Wall color-tests silent-rules tar-pax])
 AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
 AC_PREFIX_DEFAULT([/usr])
@@ -40,7 +43,7 @@ AC_ARG_VAR([MARKDOWN],[markdown command. @<:@default=markdown@:>@])
 AC_CHECK_PROGS([MARKDOWN],[markdown],[${am_missing_run}markdown],[$PATH])
 
 AC_ARG_VAR([ASCIIDOC],[asciidoc command. @<:@default=asciidoctor@:>@])
-AC_CHECK_PROGS([ASCIIDOC],[asciidoctor asciidoc],[${am_missing_run}asciidoctor],[$PATH])
+AC_CHECK_PROGS([ASCIIDOC],[asciidoc asciidoctor],[${am_missing_run}asciidoc],[$PATH])
 
 AC_ARG_VAR([ASCIIDOC_BACKEND],[asciidoc backend @<:@default=NONE@:>@])
 if test -z "$ASCIIDOC_BACKEND"; then
@@ -51,8 +54,8 @@ if test -z "$ASCIIDOC_BACKEND"; then
 	esac
 fi
 
-AC_ARG_VAR([ASCIIMAN],[asciidoc to manpage converter. @<:@default=asciidoctor@:>@])
-AC_CHECK_PROGS([ASCIIMAN],[asciidoctor a2x],[${am_missing_run}asciidoctor],[$PATH])
+AC_ARG_VAR([ASCIIMAN],[asciidoc to manpage converter. @<:@default=a2x@:>@])
+AC_CHECK_PROGS([ASCIIMAN],[a2x asciidoctor],[${am_missing_run}a2x],[$PATH])
 
 AC_ARG_VAR([ASCIIMAN_FORMAT],[asciidoc manpage option @<:@default=NONE@:>@])
 if test -z "$ASCIIMAN_FORMAT"; then
@@ -82,20 +85,25 @@ PKG_PROG_PKG_CONFIG([0.14.0])
 # Checks for libraries.
 
 # Checks for header files.
+AS_BOX([Header Files])
 AC_HEADER_STDC
 AC_PATH_X
 AC_PATH_XTRA
 AC_CHECK_HEADERS([fcntl.h locale.h stddef.h stdint.h stdlib.h string.h strings.h sys/ioctl.h sys/time.h syslog.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
+AS_BOX([Typedefs, Structures, Compiler])
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 
 # Checks for library functions.
+AS_BOX([Library Functions])
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gethostname memmove select strcasecmp strchr strcspn strdup strerror strncasecmp strndup strpbrk strrchr strspn strstr strtol strtoul])
+
+AS_BOX([X11 Extension Libraries])
 
 PKG_CHECK_MODULES([X11],[x11])
 PKG_CHECK_MODULES([XEXT],[xext])
