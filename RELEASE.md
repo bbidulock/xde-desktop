@@ -1,6 +1,6 @@
-[xde-desktop -- release notes.  2019-08-31]: #
+[xde-desktop -- release notes.  2019-09-01]: #
 
-Preliminary Release 1.3
+Preliminary Release 0.3
 =======================
 
 This is the third release of the xde-desktop package that provides a desktop
