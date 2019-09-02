@@ -1,11 +1,52 @@
-xde-desktop -- history of user-visible changes.  2016-07-09
+xde-desktop -- history of user-visible changes.  2019-09-02
+
+Release xde-desktop-0.3 released 2019-09-02
+-------------------------------------------
+
+git tag -n100 -l 0.3
+
+0.3             Preliminary Release 0.3
+
+    This is the third release of the xde-desktop package that provides a
+    desktop for the XDE (X Desktop Environment).
+
+    This release is a preliminary release: the package is not fully
+    functional yet. The purpose of this release is to simply update the
+    build system with a better NEWS file, handle annotated tags, and
+    perform lzip compression on the tarball.
+
+    Included in the release is an autoconf tarball for building the release
+    from source. See the NEWS and TODO file in the release for more
+    information. Please report problems to the issues list on github.
+
+git shortlog -e -n -w80,6,8 0.2...0.3
+
+Brian Bidulock <bidulock@openss7.org> (17):
+      git hates trailing space
+      better formatting
+      limit changelog
+      update indents
+      update build system
+      update readmes
+      reformat TODO
+      update for gettext 0.20.1
+      generate NEWS better
+      add release notes
+      perform parallel distcheck
+      specify man directory
+      place filename last in sed command
+      update build process
+      build release files better
+      update release notes
+      upload license file
+
 
 Release xde-desktop-0.2 released 2016-07-09
 -------------------------------------------
 
 git shortlog -e -n -w80,6,8 0.1...0.2
 
-Brian Bidulock <bidulock@openss7.org> (67):
+Brian Bidulock <bidulock@openss7.org> (68):
       added news file
       added readme file
       added ignore file
@@ -73,6 +114,7 @@ Brian Bidulock <bidulock@openss7.org> (67):
       minor updates to build system
       add ignore files
       simplify distribution
+      update release files
 
 
 Release xde-desktop-0.1 released 2015-12-06

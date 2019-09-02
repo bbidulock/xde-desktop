@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([xde-desktop],[0.2],[http://github.com/bbidulock/xde-desktop],[xde-desktop],[http://github.com/bbidulock/xde-desktop/issues])
-AC_REVISION([0.2])
+AC_INIT([xde-desktop],[0.3],[http://github.com/bbidulock/xde-desktop],[xde-desktop],[http://github.com/bbidulock/xde-desktop/issues])
+AC_REVISION([0.3])
 
 AC_CONFIG_SRCDIR([src/xde-desktop.c])
 AC_CONFIG_HEADERS([autoconf.h])
@@ -12,17 +12,17 @@ AC_CONFIG_AUX_DIR([scripts])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CANONICAL_TARGET
 
-DATE='2016-07-09'
+DATE='2019-09-02'
 AC_SUBST([DATE])
 
-MDOCDATE='July 7, 2016'
+MDOCDATE='September 2, 2019'
 AC_SUBST([MDOCDATE])
 
-BRANCH='master'
+BRANCH='0.3'
 AC_SUBST([BRANCH])
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([1.16 dist-lzip no-dist-gzip std-options -Wall color-tests silent-rules tar-pax])
+AM_INIT_AUTOMAKE([gnits 1.16 dist-lzip no-dist-gzip std-options -Wall color-tests silent-rules tar-pax])
 AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
 AC_PREFIX_DEFAULT([/usr])
