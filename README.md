@@ -1,9 +1,9 @@
-[xde-desktop -- read me first file.  2019-09-02]: #
+[xde-desktop -- read me first file.  2019-09-03]: #
 
 xde-desktop
 ===============
 
-Package `xde-desktop-0.3` was released under GPLv3 license 2019-09-02.
+Package `xde-desktop-0.4` was released under GPLv3 license 2019-09-03.
 
 This package provides a desktop for the XDE (_X Desktop Environment_).
 As with other XDE utilities, this package is intended on working with
@@ -17,7 +17,7 @@ run the desktop.
 Release
 -------
 
-This is the `xde-desktop-0.3` package, released 2019-09-02.  This
+This is the `xde-desktop-0.4` package, released 2019-09-03.  This
 release, and the latest version, can be obtained from [GitHub][1], using
 a command such as:
 
@@ -76,12 +76,12 @@ Report issues on GitHub [here][2].
 
 [1]: https://github.com/bbidulock/xde-desktop
 [2]: https://github.com/bbidulock/xde-desktop/issues
-[3]: https://github.com/bbidulock/xde-desktop/blob/0.3/NEWS
-[4]: https://github.com/bbidulock/xde-desktop/blob/0.3/ChangeLog
-[5]: https://github.com/bbidulock/xde-desktop/blob/0.3/TODO
-[6]: https://github.com/bbidulock/xde-desktop/blob/0.3/COMPLIANCE
-[7]: https://github.com/bbidulock/xde-desktop/blob/0.3/INSTALL
-[8]: https://github.com/bbidulock/xde-desktop/blob/0.3/LICENSE
-[9]: https://github.com/bbidulock/xde-desktop/blob/0.3/COPYING
+[3]: https://github.com/bbidulock/xde-desktop/blob/0.4/NEWS
+[4]: https://github.com/bbidulock/xde-desktop/blob/0.4/ChangeLog
+[5]: https://github.com/bbidulock/xde-desktop/blob/0.4/TODO
+[6]: https://github.com/bbidulock/xde-desktop/blob/0.4/COMPLIANCE
+[7]: https://github.com/bbidulock/xde-desktop/blob/0.4/INSTALL
+[8]: https://github.com/bbidulock/xde-desktop/blob/0.4/LICENSE
+[9]: https://github.com/bbidulock/xde-desktop/blob/0.4/COPYING
 
 [ vim: set ft=markdown sw=4 tw=72 nocin nosi fo+=tcqlorn spell: ]: #
