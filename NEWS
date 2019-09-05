@@ -21,11 +21,12 @@ git tag -n100 -l 0.4
 
 git shortlog -e -n -w80,6,8 0.3...0.4
 
-Brian Bidulock <bidulock@openss7.org> (4):
+Brian Bidulock <bidulock@openss7.org> (5):
       set better autoconf directory defaults
       better defaults now
       build release notes with distribution
       update release notes
+      update release files
 
 
 Release xde-desktop-0.3 released 2019-09-02
