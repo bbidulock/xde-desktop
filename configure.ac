@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([xde-desktop],[0.4],[http://github.com/bbidulock/xde-desktop],[xde-desktop],[http://github.com/bbidulock/xde-desktop/issues])
-AC_REVISION([0.4])
+AC_INIT([xde-desktop],[0.5],[http://github.com/bbidulock/xde-desktop],[xde-desktop],[http://github.com/bbidulock/xde-desktop/issues])
+AC_REVISION([0.5])
 
 # set better defaults
 AC_PREFIX_DEFAULT([/usr])
@@ -20,13 +20,13 @@ AC_CONFIG_AUX_DIR([scripts])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CANONICAL_TARGET
 
-DATE='2019-09-03'
+DATE='2020-02-10'
 AC_SUBST([DATE])
 
-MDOCDATE='September 3, 2019'
+MDOCDATE='February 10, 2020'
 AC_SUBST([MDOCDATE])
 
-BRANCH='0.4'
+BRANCH='0.5'
 AC_SUBST([BRANCH])
 
 # Initialize Automake

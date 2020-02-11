@@ -1,5 +1,88 @@
 # created with git log --stat=76 -M -C -500|fmt -sct -w80
 
+commit ddfac74efb8149ab4177fff51dcca7040834ef94
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Feb 10 23:51:43 2020 -0700
+
+    update copyright headers
+
+ src/xde-desktop.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+commit d3b640fcb8a38e4e69afab24012a347c776fad97
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Feb 10 23:51:08 2020 -0700
+
+    updates for -Wextra
+
+ src/xde-desktop.c | 76 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 69 insertions(+), 7 deletions(-)
+
+commit dd6c9bfef43221b77a001f8df7240291175e033e
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Mon Feb 10 23:43:13 2020 -0700
+
+    better cscope and MDOCDATE
+
+ autogen.sh   | 8 ++++++--
+ configure.sh | 7 ++-----
+ 2 files changed, 8 insertions(+), 7 deletions(-)
+
+commit dfbfae83d352ff36c771d264021d8d9993af3892
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Dec 21 03:30:57 2019 -0700
+
+    remove libxss
+
+ configure.ac | 1 -
+ 1 file changed, 1 deletion(-)
+
+commit 1b008c0b3175f34302b66383e8b660eb6561bfee
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Dec 21 03:26:09 2019 -0700
+
+    remove libunique
+
+ configure.ac | 1 -
+ 1 file changed, 1 deletion(-)
+
+commit 716eebeb69703d5c1fc9e588891e0466fe549518
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Sat Dec 21 03:18:29 2019 -0700
+
+    remove xxf86misc
+
+ configure.ac | 1 -
+ 1 file changed, 1 deletion(-)
+
+commit be842101a27cc1fe5366305d8d253cf0bd7a0c87
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Tue Sep 24 00:13:22 2019 -0600
+
+    gtk2 uses deprecated glib2 declarations
+
+ configure.sh | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit 18d009f6a8e645af4f680ce414d70ab46efb6cb4
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Sep 5 05:13:09 2019 -0600
+
+    remove deprecated m4 macro from configure.ac
+
+ configure.ac | 1 -
+ 1 file changed, 1 deletion(-)
+
+commit fd41b97deadd828b6e77fb5f3d0d872f12eb6bb6
+Author: Brian Bidulock <bidulock@openss7.org>
+Date:   Thu Sep 5 05:13:05 2019 -0600
+
+    post-release update
+
+ ChangeLog | 13 +++++++++++++
+ NEWS      |  3 ++-
+ 2 files changed, 15 insertions(+), 1 deletion(-)
+
 commit c15eb777ba804517d0004f1540f8c149835e2804
 Author: Brian Bidulock <bidulock@openss7.org>
 Date:   Tue Sep 3 04:48:53 2019 -0600
