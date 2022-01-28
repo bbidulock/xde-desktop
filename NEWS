@@ -1,4 +1,37 @@
-xde-desktop -- history of user-visible changes.  2019-09-03
+xde-desktop -- history of user-visible changes.  2020-02-10
+
+Release xde-desktop-0.5 released 2020-02-10
+-------------------------------------------
+
+git tag -n100 -l 0.5
+
+0.5             Preliminary Release 0.5
+
+    This is the fifth release of the xde-desktop package that provides a
+    desktop for the XDE (X Desktop Environment).
+
+    This release is a preliminary release: the package is not fully
+    functional yet. The purpose of this release is to update the build
+    process, remove unnecessary libraries and deprecated macros.
+
+    Included in the release is an autoconf tarball for building the package
+    from source. See the NEWS and TODO file in the release for more
+    information. Please report problems to the issues list on GitHub.
+
+git shortlog -e -n -w80,6,8 0.4...0.5
+
+Brian Bidulock <bidulock@openss7.org> (10):
+      post-release update
+      remove deprecated m4 macro from configure.ac
+      gtk2 uses deprecated glib2 declarations
+      remove xxf86misc
+      remove libunique
+      remove libxss
+      better cscope and MDOCDATE
+      updates for -Wextra
+      update copyright headers
+      update release files
+
 
 Release xde-desktop-0.4 released 2019-09-03
 -------------------------------------------

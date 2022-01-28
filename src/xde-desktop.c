@@ -1,6 +1,6 @@
 /*****************************************************************************
 
- Copyright (c) 2008-2015  Monavacon Limited <http://www.monavacon.com/>
+ Copyright (c) 2008-2020  Monavacon Limited <http://www.monavacon.com/>
  Copyright (c) 2001-2008  OpenSS7 Corporation <http://www.openss7.com/>
  Copyright (c) 1997-2001  Brian F. G. Bidulock <bidulock@openss7.org>
 
@@ -432,6 +432,10 @@ static void
 xde_desktop_changed(GFileMonitor *monitor, GFile *file, GFile *other_file,
 		    GFileMonitorEvent event_type, gpointer user_data)
 {
+	(void) monitor;
+	(void) file;
+	(void) other_file;
+	(void) event_type;
 	XdeDesktop *desk = user_data;
 	update_desktop(desk);
 }
@@ -439,6 +443,7 @@ xde_desktop_changed(GFileMonitor *monitor, GFile *file, GFile *other_file,
 static void
 xde_desktop_watch_directory(XdeDesktop *desk, const char *label, const char *path)
 {
+	(void) label;
 	if (desk->directory)
 		g_object_unref(desk->directory);
 	desk->directory = g_file_new_for_path(path);
@@ -523,6 +528,8 @@ xde_icon_shortcut_new(XdeDesktop *desk, const char *path)
 {
 	XdeIcon *icon = NULL;
 
+	(void) desk;
+	(void) path;
 	/* FIXME: create one */
 	return (icon);
 }
@@ -532,6 +539,8 @@ xde_icon_directory_new(XdeDesktop *desk, const char *path)
 {
 	XdeIcon *icon = NULL;
 
+	(void) desk;
+	(void) path;
 	/* FIXME: create one */
 	return (icon);
 }
@@ -541,6 +550,8 @@ xde_icon_file_new(XdeDesktop *desk, const char *path)
 {
 	XdeIcon *icon = NULL;
 
+	(void) desk;
+	(void) path;
 	/* FIXME: create one */
 	return (icon);
 }
@@ -550,6 +561,7 @@ xde_icon_create(XdeIcon *icon)
 {
 	XID xid = None;
 
+	(void) icon;
 	/* FIXME: create icon */
 	return (xid);
 }
@@ -691,6 +703,8 @@ xde_desktop_calculate_cells(XdeDesktop *desk)
 	rows = desk->rows = (int) (h / ICON_HIGH);
 	xoff = desk->xoff = (int) ((w - cols * ICON_WIDE) / 2);
 	yoff = desk->yoff = (int) ((h - rows * ICON_HIGH) / 2);
+#else
+	(void) desk;
 #endif
 	return (1);
 }
@@ -1044,6 +1058,8 @@ workspace_destroyed(WnckScreen *wnck, WnckWorkspace *space, gpointer user_data)
 {
 	XdeScreen *xscr = user_data;
 
+	(void) wnck;
+	(void) space;
 	DPRINT();
 	if (!xscr) {
 		EPRINTF("xscr is NULL\n");
@@ -1056,6 +1072,8 @@ workspace_created(WnckScreen *wnck, WnckWorkspace *space, gpointer user_data)
 {
 	XdeScreen *xscr = user_data;
 
+	(void) wnck;
+	(void) space;
 	DPRINT();
 	if (!xscr) {
 		EPRINTF("xscr is NULL\n");
@@ -1270,6 +1288,8 @@ window_manager_changed(WnckScreen *wnck, gpointer user)
 static void
 something_changed(WnckScreen *wnck, XdeScreen *xscr)
 {
+	(void) wnck;
+	(void) xscr;
 }
 
 static void
@@ -1290,6 +1310,7 @@ background_changed(WnckScreen *wnck, gpointer user)
 {
 	XdeScreen *xscr = (typeof(xscr)) user;
 
+	(void) wnck;
 	DPRINT();
 	if (!xscr) {
 		EPRINTF("xscr is NULL\n");
@@ -1302,6 +1323,7 @@ active_workspace_changed(WnckScreen *wnck, WnckWorkspace *prev, gpointer user)
 {
 	XdeScreen *xscr = (typeof(xscr)) user;
 
+	(void) prev;
 	DPRINT();
 	if (!xscr) {
 		EPRINTF("xscr is NULL\n");
@@ -1369,8 +1391,8 @@ update_current_desktop(XdeScreen *xscr, Atom prop)
 				xscr->current = data[0];
 				changed = True;
 			}
-			x = (xscr->mhaware = (nitems >= xscr->nmon)) ? &i : &j;
-			for (i = 0, xmon = xscr->mons; i < xscr->nmon; i++, xmon++) {
+			x = (xscr->mhaware = (nitems >= (unsigned long) xscr->nmon)) ? &i : &j;
+			for (i = 0, xmon = xscr->mons; i < (unsigned long) xscr->nmon; i++, xmon++) {
 				if (xmon->current != (int) data[*x]) {
 					xmon->current = data[*x];
 					changed = True;
@@ -1391,8 +1413,8 @@ update_current_desktop(XdeScreen *xscr, Atom prop)
 				xscr->current = data[0];
 				changed = True;
 			}
-			x = (xscr->mhaware = (nitems >= xscr->nmon)) ? &i : &j;
-			for (i = 0, xmon = xscr->mons; i < xscr->nmon; i++, xmon++) {
+			x = (xscr->mhaware = (nitems >= (unsigned long) xscr->nmon)) ? &i : &j;
+			for (i = 0, xmon = xscr->mons; i < (unsigned long) xscr->nmon; i++, xmon++) {
 				if (xmon->current != (int) data[*x]) {
 					xmon->current = data[*x];
 					changed = True;
@@ -1413,8 +1435,8 @@ update_current_desktop(XdeScreen *xscr, Atom prop)
 				xscr->current = data[0];
 				changed = True;
 			}
-			x = (xscr->mhaware = (nitems >= xscr->nmon)) ? &i : &j;
-			for (i = 0, xmon = xscr->mons; i < xscr->nmon; i++, xmon++) {
+			x = (xscr->mhaware = (nitems >= (unsigned long) xscr->nmon)) ? &i : &j;
+			for (i = 0, xmon = xscr->mons; i < (unsigned long) xscr->nmon; i++, xmon++) {
 				if (xmon->current != (int) data[*x]) {
 					xmon->current = data[*x];
 					changed = True;
@@ -1496,7 +1518,7 @@ update_workarea(XdeScreen *xscr, Atom prop)
 				length += (after + 3) >> 2;
 				goto net_again;
 			}
-			for (i = 0, d = 0; d < (nitems >> 2) && d < xscr->desks; d++, i += 4) {
+			for (i = 0, d = 0; d < (nitems >> 2) && d < (unsigned long) xscr->desks; d++, i += 4) {
 				XdeDesktop *desk;
 
 				workarea.x = data[i + 0];
@@ -1664,27 +1686,39 @@ init_window(XdeScreen *xscr)
 static void
 update_screen_size(XdeScreen *xscr, int new_width, int new_height)
 {
+	(void) xscr;
+	(void) new_width;
+	(void) new_height;
 }
 
 static void
 create_monitor(XdeScreen *xscr, XdeMonitor *mon, int m)
 {
+	(void) xscr;
+	(void) m;
 	memset(mon, 0, sizeof(*mon));
 }
 
 static void
 delete_monitor(XdeScreen *xscr, XdeMonitor *mon, int m)
 {
+	(void) xscr;
+	(void) mon;
+	(void) m;
 }
 
 static void
 update_monitor(XdeScreen *xscr, XdeMonitor *mon, int m)
 {
+	(void) xscr;
+	(void) mon;
+	(void) m;
 }
 
 static void
 update_screen(XdeScreen *xscr)
 {
+	(void) xscr;
 }
 
 static void
@@ -2093,6 +2127,7 @@ get_keys(gpointer key, gpointer value, gpointer user_data)
 {
 	GList **list_p = user_data;
 
+	(void) value;
 	*list_p = g_list_append(*list_p, strdup(key));
 }
 
@@ -2503,6 +2538,7 @@ add_application(gpointer key, gpointer value, gpointer user_data)
 	GList *list = NULL;
 	char *k;
 
+	(void) value;
 	if ((g_hash_table_lookup_extended
 	     (MIME_APPLICATIONS, key, (gpointer *) &k, (gpointer *) &list)))
 		g_hash_table_steal(MIME_APPLICATIONS, k);
@@ -2592,6 +2628,8 @@ do_run(int argc, char *argv[], Bool replace)
 	XdeScreen *xscr;
 	int s, nscr;
 
+	(void) argc;
+	(void) argv;
 	DPRINT();
 	selwin = XCreateSimpleWindow(dpy, GDK_WINDOW_XID(root), 0, 0, 1, 1, 0, 0, 0);
 
@@ -2648,6 +2686,8 @@ do_run(int argc, char *argv[], Bool replace)
 static void
 do_quit(int argc, char *argv[])
 {
+	(void) argc;
+	(void) argv;
 	DPRINT();
 	get_selection(True, None);
 }
@@ -2663,6 +2703,7 @@ update_theme(XdeScreen *xscr, Atom prop)
 	Bool changed = False;
 	GtkSettings *set;
 
+	(void) prop;
 	DPRINT();
 	gtk_rc_reparse_all();
 	if (XGetTextProperty(dpy, root, &xtp, _XA_XDE_THEME_NAME)) {
@@ -2717,6 +2758,7 @@ update_theme(XdeScreen *xscr, Atom prop)
 static void
 refresh_desktop(XdeScreen *xscr)
 {
+	(void) xscr;
 }
 
 static void
@@ -2983,6 +3025,7 @@ root_handler(GdkXEvent *xevent, GdkEvent *event, gpointer data)
 	XdeScreen *xscr = (typeof(xscr)) data;
 	Display *dpy = GDK_DISPLAY_XDISPLAY(xscr->disp);
 
+	(void) event;
 	DPRINT();
 	if (!xscr) {
 		EPRINTF("xscr is NULL\n");
@@ -3002,6 +3045,7 @@ selwin_handler(GdkXEvent *xevent, GdkEvent *event, gpointer data)
 	XdeScreen *xscr = data;
 	Display *dpy = GDK_DISPLAY_XDISPLAY(xscr->disp);
 
+	(void) event;
 	DPRINT();
 	if (!xscr) {
 		EPRINTF("xscr is NULL\n");
@@ -3043,6 +3087,7 @@ client_handler(GdkXEvent *xevent, GdkEvent *event, gpointer data)
 	XEvent *xev = (typeof(xev)) xevent;
 	Display *dpy = (typeof(dpy)) data;
 
+	(void) event;
 	DPRINT();
 	switch (xev->type) {
 	case ClientMessage:
@@ -3086,6 +3131,7 @@ proxy_handler(GdkXEvent *xevent, GdkEvent *event, gpointer data)
 	Display *dpy = GDK_DISPLAY_XDISPLAY(xscr->disp);
 	int num;
 
+	(void) event;
 	DPRINT();
 	if (!xscr) {
 		EPRINTF("xscr is NULL\n");
@@ -3192,6 +3238,7 @@ clientSetProperties(SmcConn smcConn, SmPointer data)
 		&prop[10]
 	};
 
+	(void) data;
 	j = 0;
 
 	/* CloneCommand: This is like the RestartCommand except it restarts a copy of the 
@@ -3455,6 +3502,9 @@ static void
 clientSaveYourselfCB(SmcConn smcConn, SmPointer data, int saveType, Bool shutdown,
 		     int interactStyle, Bool fast)
 {
+	(void) saveType;
+	(void) interactStyle;
+	(void) fast;
 	if (!(shutting_down = shutdown)) {
 		if (!SmcRequestSaveYourselfPhase2(smcConn, clientSaveYourselfPhase2CB, data))
 			SmcSaveYourselfDone(smcConn, False);
@@ -3474,6 +3524,7 @@ clientSaveYourselfCB(SmcConn smcConn, SmPointer data, int saveType, Bool shutdow
 static void
 clientDieCB(SmcConn smcConn, SmPointer data)
 {
+	(void) data;
 	SmcCloseConnection(smcConn, 0, NULL);
 	shutting_down = False;
 	gtk_main_quit();
@@ -3482,6 +3533,8 @@ clientDieCB(SmcConn smcConn, SmPointer data)
 static void
 clientSaveCompleteCB(SmcConn smcConn, SmPointer data)
 {
+	(void) smcConn;
+	(void) data;
 	if (saving_yourself) {
 		saving_yourself = False;
 		gtk_main_quit();
@@ -3503,6 +3556,8 @@ clientSaveCompleteCB(SmcConn smcConn, SmPointer data)
 static void
 clientShutdownCancelledCB(SmcConn smcConn, SmPointer data)
 {
+	(void) smcConn;
+	(void) data;
 	shutting_down = False;
 	gtk_main_quit();
 }
@@ -3540,6 +3595,7 @@ on_ifd_watch(GIOChannel *chan, GIOCondition cond, pointer data)
 	SmcConn smcConn = data;
 	IceConn iceConn = SmcGetIceConnection(smcConn);
 
+	(void) chan;
 	if (cond & (G_IO_NVAL | G_IO_HUP | G_IO_ERR)) {
 		EPRINTF("poll failed: %s %s %s\n",
 			(cond & G_IO_NVAL) ? "NVAL" : "",
@@ -3669,13 +3725,15 @@ startup(int argc, char *argv[])
 static void
 copying(int argc, char *argv[])
 {
+	(void) argc;
+	(void) argv;
 	if (!options.output && !options.debug)
 		return;
 	(void) fprintf(stdout, "\
 --------------------------------------------------------------------------------\n\
 %1$s\n\
 --------------------------------------------------------------------------------\n\
-Copyright (c) 2008-2015  Monavacon Limited <http://www.monavacon.com/>\n\
+Copyright (c) 2008-2020  Monavacon Limited <http://www.monavacon.com/>\n\
 Copyright (c) 2001-2008  OpenSS7 Corporation <http://www.openss7.com/>\n\
 Copyright (c) 1997-2001  Brian F. G. Bidulock <bidulock@openss7.org>\n\
 \n\
@@ -3713,13 +3771,15 @@ regulations).\n\
 static void
 version(int argc, char *argv[])
 {
+	(void) argc;
+	(void) argv;
 	if (!options.output && !options.debug)
 		return;
 	(void) fprintf(stdout, "\
 %1$s (OpenSS7 %2$s) %3$s\n\
 Written by Brian Bidulock.\n\
 \n\
-Copyright (c) 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015  Monavacon Limited.\n\
+Copyright (c) 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2020  Monavacon Limited.\n\
 Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008  OpenSS7 Corporation.\n\
 Copyright (c) 1997, 1998, 1999, 2000, 2001  Brian F. G. Bidulock.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
@@ -3735,6 +3795,7 @@ See `%1$s --copying' for copying permissions.\n\
 static void
 usage(int argc, char *argv[])
 {
+	(void) argc;
 	if (!options.output && !options.debug)
 		return;
 	(void) fprintf(stderr, "\
@@ -3757,6 +3818,7 @@ show_bool(Bool value)
 static void
 help(int argc, char *argv[])
 {
+	(void) argc;
 	if (!options.output && !options.debug)
 		return;
 	/* *INDENT-OFF* */

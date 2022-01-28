@@ -1,15 +1,14 @@
-[xde-desktop -- release notes.  2019-09-01]: #
+[xde-desktop -- release notes.  2020-02-11]: #
 
-Preliminary Release 0.4
+Preliminary Release 0.5
 =======================
 
-This is the fourth release of the xde-desktop package that provides a
+This is the fifth release of the xde-desktop package that provides a
 desktop for the XDE (X Desktop Environment).
 
 This release is a preliminary release: the package is not fully
-functional yet.  The purpose of this release is to simply generate
-better autoconf directory defaults and improve the build process some
-more.
+functional yet.  The purpose of this release is to update the build
+process, remove unnecessary libraries and deprecated macros.
 
 Included in the release is an autoconf tarball for building the package
 from source.  See the [NEWS](NEWS) and [TODO](TODO) file in the release
