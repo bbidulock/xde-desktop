@@ -8,17 +8,17 @@
 
 case "`uname -m`" in
 	i686)
-		CPPFLAGS="-D_FORTIFY_SOURCE=2"
-		CFLAGS="-march=i686 -mtune=generic -O2 -pipe -fstack-protector-strong -fno-plt"
-		CXXFLAGS="-march=i686 -mtune=generic -O2 -pipe -fstack-protector-strong -fno-plt"
+		CPPFLAGS=""
+		CFLAGS="-march=i686 -mtune=generic -O2 -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection"
+		CXXFLAGS="$CFLAGS -Wp,-D_GLIBCXX_ASSERTIONS"
 		LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now"
 		DEBUG_CFLAGS="-g -ggdb -fvar-tracking-assignments"
 		DEBUG_CXXFLAGS="-g -ggdb -fvar-tracking-assignments"
 	;;
 	x86_64)
-		CPPFLAGS="-D_FORTIFY_SOURCE=2"
-		CFLAGS="-march=x86-64 -mtune=generic -O2 -pipe -fstack-protector-strong -fno-plt"
-		CXXFLAGS="-march=x86-64 -mtune=generic -O2 -pipe -fstack-protector-strong -fno-plt"
+		CPPFLAGS=""
+		CFLAGS="-march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection"
+		CXXFLAGS="$CFLAGS -Wp,-D_GLIBCXX_ASSERTIONS"
 		LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now"
 		DEBUG_CFLAGS="-g -ggdb -fvar-tracking-assignments"
 		DEBUG_CXXFLAGS="-g -ggdb -fvar-tracking-assignments"
@@ -29,8 +29,10 @@ esac
 	--enable-maintainer-mode \
 	--enable-dependency-tracking \
 	CPPFLAGS="$CPPFLAGS" \
-	CFLAGS="$DEBUG_CFLAGS -Wall -Werror -Wno-deprecated-declarations $CFLAGS" \
-	CXXFLAGS="$DEBUG_CXXFLAGS -Wall -Werror -Wno-deprecated-declarations $CXXFLAGS" \
+	CFLAGS="$DEBUG_CFLAGS -Wall -Wextra -Werror $CFLAGS" \
+	CFLAGS="$DEBUG_CFLAGS -Wall -Wextra -Werror -Wno-deprecated-declarations -Wno-unused-parameter -Wno-sign-compare $CFLAGS" \
+	CXXFLAGS="$DEBUG_CXXFLAGS -Wall -Wextra -Werror $CXXFLAGS" \
+	CXXFLAGS="$DEBUG_CXXFLAGS -Wall -Wextra -Werror -Wno-deprecated-declarations -Wno-unused-parameter -Wno-sign-compare $CXXFLAGS" \
 	LDFLAGS="$LDFLAGS" \
 	DEBUG_CFLAGS="$DEBUG_CFLAGS" \
 	DEBUG_CXXFLAGS="$DEBUG_CXXFLAGS"
